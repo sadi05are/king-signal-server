@@ -1,12 +1,21 @@
 {
   "SADIMACH0001": {
     "key": "PRO0003KGS",
-    "balance": 100,
+    "balance": 0,
     "status": "ok",
     "expires": "2026-03-11T20:50:57.522Z",
     "registered": true,
     "created": "2026-03-04T20:50:57.522Z",
     "nick": "SADIMACHO",
-    "reg_time": "2026-03-04T20:52:08.607Z"
+    "reg_time": "2026-03-04T20:52:08.607Z",
+    "withdrawals": [
+      {
+        "amount": 100,
+        "bank": "OBANK",
+        "card": "+996501488944",
+        "time": "2026-03-04T20:54:26.330Z",
+        "status": "pending"
+      }
+    ]
   }
 }
