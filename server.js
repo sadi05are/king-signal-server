@@ -85,8 +85,7 @@ app.post('/webhook', async (req, res) => {
   const parts = text.split(' ');
   const cmd = parts[0].toLowerCase();
   const arg = (parts[1] || '').toUpperCase();
-  const arg2 = parts.slice(1).join(' ');
-if (cmd === '/help' || cmd === '/start') return sendTg(chatId,
+  const arg2 = parts.slice(1).join(' ');if (cmd === '/help' || cmd === '/start') return sendTg(chatId,
     👑 <b>KING SIGNAL — Панель управления</b>\n\n/ban КЛЮЧ — заблокировать\n/unban КЛЮЧ — разблокировать\n/freeze КЛЮЧ — заморозить\n/unfreeze КЛЮЧ — разморозить\n/info КЛЮЧ — инфо\n/keys — все ключи\n/maintenance on/off — тех.работы\n/setmsg ТЕКСТ — изменить сообщение\n/status — статус);
 
   if (cmd === '/ban') {
