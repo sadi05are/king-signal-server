@@ -168,3 +168,5 @@ app.listen(PORT, () => {
     https.get(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook?url=${encodeURIComponent(url)}`, () => {});
   }, 3000);
 });
+
+require('./bot.js');
