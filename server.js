@@ -32,61 +32,41 @@ function sendTelegram(chatId, text) {
   req.write(body); req.end();
 }
 
-// ── GET /check ────────────────────────────────────────────────────────────────
 app.get('/check', (req, res) => {
   const { key, player_id } = req.query;
   if (!key || !player_id) return res.json({ status: 'error', message: 'Введи Айди и ключ' });
-
   const players = loadPlayers();
   const p = players[player_id.toUpperCase()];
-
   if (!p) return res.json({ status: 'error', message: '✕ Айди не найден' });
   if (p.key !== key.toUpperCase()) return res.json({ status: 'error', message: '✕ Неверный ключ' });
   if (p.status === 'banned')      return res.json({ status: 'banned', message: p.ban_reason || 'Аккаунт заблокирован.' });
   if (p.status === 'frozen')      return res.json({ status: 'frozen', message: 'Аккаунт заморожен.' });
   if (p.status === 'maintenance') return res.json({ status: 'maintenance', message: 'Технические работы.' });
   if (p.expires && new Date(p.expires) < new Date()) return res.json({ status: 'expired' });
-
   const expiresIn = p.expires ? new Date(p.expires).getTime() - Date.now() : null;
   res.json({ status: 'ok', key: p.key, playerId: player_id.toUpperCase(), nick: p.nick || null, expiresIn });
 });
 
-// ── POST /addplayer ───────────────────────────────────────────────────────────
 app.post('/addplayer', (req, res) => {
   const { playerId, key, days } = req.body;
   if (!playerId || !key) return res.json({ ok: false, message: 'Нужен playerId и key' });
-
   const players = loadPlayers();
   const id = playerId.toUpperCase();
   const k  = key.toUpperCase();
-
   if (players[id]) return res.json({ ok: false, message: 'Этот Айди уже существует' });
-
   const expires = days && days > 0 ? new Date(Date.now() + days * 86400000).toISOString() : null;
-
   players[id] = {
-    key: k,
-    balance: 0,
-    status: 'ok',
-    expires,
-    registered: true,
-    created: new Date().toISOString(),
-    nick: id
+    key: k, balance: 0, status: 'ok',
+    expires, registered: true,
+    created: new Date().toISOString(), nick: id
   };
   savePlayers(players);
-
   sendTelegram(ADMIN_ID,
-    `🆕 <b>НОВЫЙ ИГРОК ДОБАВЛЕН</b>\n\n` +
-    `🆔 Айди: <code>${id}</code>\n` +
-    `🔑 Ключ: <code>${k}</code>\n` +
-    `📅 Срок: ${days > 0 ? days + ' дней' : 'Бессрочный'}\n` +
-    `🕐 ${new Date().toLocaleString('ru')}`
+    `🆕 <b>НОВЫЙ ИГРОК</b>\n\n🆔 <code>${id}</code>\n🔑 <code>${k}</code>\n📅 ${days > 0 ? days + ' дней' : 'Бессрочный'}`
   );
-
   res.json({ ok: true, playerId: id, key: k, expires });
 });
 
-// ── POST /ban / /unban ────────────────────────────────────────────────────────
 app.post('/ban', (req, res) => {
   const { playerId, reason } = req.body;
   const players = loadPlayers();
@@ -109,13 +89,10 @@ app.post('/unban', (req, res) => {
   res.json({ ok: true });
 });
 
-// ── GET /players ──────────────────────────────────────────────────────────────
 app.get('/players', (req, res) => {
   const players = loadPlayers();
   const list = Object.entries(players).map(([id, p]) => ({
-    playerId: id,
-    key: p.key,
-    nick: p.nick || id,
+    playerId: id, key: p.key, nick: p.nick || id,
     status: p.status,
     expires: p.expires ? new Date(p.expires).toLocaleString('ru') : '∞',
     created: p.created ? new Date(p.created).toLocaleString('ru') : '—'
@@ -123,11 +100,9 @@ app.get('/players', (req, res) => {
   res.json({ count: list.length, players: list });
 });
 
-// ── WEBHOOK ───────────────────────────────────────────────────────────────────
 app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
   const msg = req.body.message;
   if (!msg || String(msg.chat.id) !== ADMIN_ID) return res.json({});
-
   const text  = (msg.text || '').trim();
   const parts = text.split(' ');
   const cmd   = parts[0];
@@ -136,11 +111,11 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
     const id = parts[1].toUpperCase();
     const reason = parts.slice(2).join(' ') || 'Нарушение правил';
     const players = loadPlayers();
-    if (!players[id]) { sendTelegram(ADMIN_ID, `❌ Игрок <code>${id}</code> не найден`); return res.json({}); }
+    if (!players[id]) { sendTelegram(ADMIN_ID, `❌ <code>${id}</code> не найден`); return res.json({}); }
     players[id].status = 'banned';
     players[id].ban_reason = reason;
     savePlayers(players);
-    sendTelegram(ADMIN_ID, `🔨 <code>${id}</code> заблокирован\nПричина: ${reason}`);
+    sendTelegram(ADMIN_ID, `🔨 <code>${id}</code> заблокирован`);
   }
   else if (cmd === '/unban' && parts[1]) {
     const id = parts[1].toUpperCase();
@@ -158,28 +133,21 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
     if (!p) { sendTelegram(ADMIN_ID, `❌ Не найден`); return res.json({}); }
     const exp = p.expires ? new Date(p.expires).toLocaleString('ru') : '∞';
     const icon = p.status === 'banned' ? '🔨' : p.status === 'frozen' ? '❄️' : '✅';
-    sendTelegram(ADMIN_ID,
-      `👤 <b>${id}</b>\n🔑 <code>${p.key}</code>\n📅 До: ${exp}\n${icon} ${p.status}` +
-      (p.ban_reason ? `\nПричина: ${p.ban_reason}` : '')
-    );
+    sendTelegram(ADMIN_ID, `👤 <b>${id}</b>\n🔑 <code>${p.key}</code>\n📅 ${exp}\n${icon} ${p.status}`);
   }
   else if (cmd === '/players') {
     const players = loadPlayers();
     const list = Object.entries(players);
     let txt = `👥 <b>Игроки (${list.length})</b>\n\n`;
     list.slice(0, 20).forEach(([id, p]) => {
-      const icon = p.status === 'banned' ? '🔨' : p.status === 'frozen' ? '❄️' : '✅';
+      const icon = p.status === 'banned' ? '🔨' : '✅';
       txt += `${icon} <code>${id}</code> — <code>${p.key}</code>\n`;
     });
-    if (list.length > 20) txt += `...и ещё ${list.length - 20}`;
     sendTelegram(ADMIN_ID, txt);
   }
   else if (cmd === '/help') {
-    sendTelegram(ADMIN_ID,
-      `📋 <b>Команды</b>\n\n/ban ID [причина]\n/unban ID\n/info ID\n/players`
-    );
+    sendTelegram(ADMIN_ID, `📋 <b>Команды</b>\n\n/ban ID\n/unban ID\n/info ID\n/players`);
   }
-
   res.json({});
 });
 
