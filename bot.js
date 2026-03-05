@@ -11,7 +11,6 @@ function isAdmin(chatId) {
   return ADMIN_IDS.includes(String(chatId));
 }
 
-// ── /start ────────────────────────────────────────────────────────────────────
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   if (isAdmin(chatId)) {
@@ -32,19 +31,16 @@ bot.onText(/\/start/, (msg) => {
   }
 });
 
-// ── /addplayer ────────────────────────────────────────────────────────────────
 bot.onText(/\/addplayer/, (msg) => {
   const chatId = msg.chat.id;
   if (!isAdmin(chatId)) return;
   states[chatId] = { action: 'addplayer_id' };
   bot.sendMessage(chatId,
-    `➕ <b>ДОБАВИТЬ ИГРОКА</b>\n\n` +
-    `Шаг 1/3 — Введи <b>Айди</b> игрока:\n<i>Пример: PLAYER001</i>`,
+    `➕ <b>ДОБАВИТЬ ИГРОКА</b>\n\nШаг 1/3 — Введи <b>Айди</b>:\n<i>Пример: PLAYER001</i>`,
     { parse_mode: 'HTML' }
   );
 });
 
-// ── /ban ──────────────────────────────────────────────────────────────────────
 bot.onText(/\/ban(?:\s+(.+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
   if (!isAdmin(chatId)) return;
@@ -58,7 +54,6 @@ bot.onText(/\/ban(?:\s+(.+))?/, async (msg, match) => {
   await doBan(chatId, id.toUpperCase(), reason);
 });
 
-// ── /unban ────────────────────────────────────────────────────────────────────
 bot.onText(/\/unban(?:\s+(\S+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
   if (!isAdmin(chatId)) return;
@@ -70,7 +65,6 @@ bot.onText(/\/unban(?:\s+(\S+))?/, async (msg, match) => {
   await doUnban(chatId, id.toUpperCase());
 });
 
-// ── /info ─────────────────────────────────────────────────────────────────────
 bot.onText(/\/info(?:\s+(\S+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
   if (!isAdmin(chatId)) return;
@@ -82,7 +76,6 @@ bot.onText(/\/info(?:\s+(\S+))?/, async (msg, match) => {
   await doInfo(chatId, id.toUpperCase());
 });
 
-// ── /players ──────────────────────────────────────────────────────────────────
 bot.onText(/\/players/, async (msg) => {
   const chatId = msg.chat.id;
   if (!isAdmin(chatId)) return;
@@ -103,37 +96,28 @@ bot.onText(/\/players/, async (msg) => {
   }
 });
 
-// ── ТЕКСТОВЫЕ СООБЩЕНИЯ (пошаговый диалог) ───────────────────────────────────
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = (msg.text || '').trim();
   if (!text || text.startsWith('/')) return;
   if (!isAdmin(chatId)) return;
-
   const state = states[chatId];
   if (!state) return;
 
-  // Шаг 1 — Айди
   if (state.action === 'addplayer_id') {
     states[chatId] = { action: 'addplayer_key', playerId: text.toUpperCase() };
     bot.sendMessage(chatId,
-      `✅ Айди: <b>${text.toUpperCase()}</b>\n\n` +
-      `Шаг 2/3 — Введи <b>Ключ</b>:\n<i>Пример: KING-ABC123</i>`,
+      `✅ Айди: <b>${text.toUpperCase()}</b>\n\nШаг 2/3 — Введи <b>Ключ</b>:\n<i>Пример: KING-ABC123</i>`,
       { parse_mode: 'HTML' }
     );
   }
-
-  // Шаг 2 — Ключ
   else if (state.action === 'addplayer_key') {
     states[chatId] = { action: 'addplayer_days', playerId: state.playerId, key: text.toUpperCase() };
     bot.sendMessage(chatId,
-      `✅ Ключ: <b>${text.toUpperCase()}</b>\n\n` +
-      `Шаг 3/3 — На сколько <b>дней</b>?\n<i>Введи 0 для бессрочного</i>`,
+      `✅ Ключ: <b>${text.toUpperCase()}</b>\n\nШаг 3/3 — На сколько <b>дней</b>?\n<i>0 = бессрочный</i>`,
       { parse_mode: 'HTML' }
     );
   }
-
-  // Шаг 3 — Дни → сохраняем
   else if (state.action === 'addplayer_days') {
     const days = parseInt(text, 10);
     if (isNaN(days) || days < 0) {
@@ -142,24 +126,20 @@ bot.on('message', async (msg) => {
     delete states[chatId];
     await doAddPlayer(chatId, state.playerId, state.key, days);
   }
-
   else if (state.action === 'ban_id') {
     delete states[chatId];
     await doBan(chatId, text.toUpperCase(), 'Нарушение правил');
   }
-
   else if (state.action === 'unban_id') {
     delete states[chatId];
     await doUnban(chatId, text.toUpperCase());
   }
-
   else if (state.action === 'info_id') {
     delete states[chatId];
     await doInfo(chatId, text.toUpperCase());
   }
 });
 
-// ── ФУНКЦИИ ───────────────────────────────────────────────────────────────────
 async function doAddPlayer(chatId, playerId, key, days) {
   try {
     const res = await fetch(`${API_URL}/addplayer`, {
