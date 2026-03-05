@@ -7,12 +7,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const BOT_TOKEN = '8639490181:AAHlTgtVDsRuohlt0ZgcGV2h0J4vz7o5pLQ';
-const ADMIN_ID = '6697505756';
+const BOT_TOKEN  = process.env.BOT_TOKEN  || '8639490181:AAHlTgtVDsRuohlt0ZgcGV2h0J4vz7o5pLQ';
+const ADMIN_ID   = process.env.ADMIN_ID   || '6697505756';
 const PLAYERS_FILE = './players.json';
 
 // ══════════════════════════════════════════════════
-// PLAYERS DB
+// PLAYERS DB (players.json)
+// Структура: { "PLAYER_ID": { key, playerId, expiresAt, banned, frozen, createdAt } }
 // ══════════════════════════════════════════════════
 function loadPlayers() {
   try { return JSON.parse(fs.readFileSync(PLAYERS_FILE, 'utf8')); }
@@ -21,74 +22,6 @@ function loadPlayers() {
 function savePlayers(data) {
   fs.writeFileSync(PLAYERS_FILE, JSON.stringify(data, null, 2));
 }
-
-// ══════════════════════════════════════════════════
-// ROUND SYSTEM — общий раунд для всех игроков
-// ══════════════════════════════════════════════════
-const WAIT_MS   = 7000;   // 7 сек приём ставок
-const MAX_FLIGHT = 20000; // макс 20 сек полёт
-
-let currentRound = null;
-
-function genCrashAt(seed, isAvi = false) {
-  let x = seed;
-  x = ((x >> 16) ^ x) * 0x45d9f3b | 0;
-  x = ((x >> 16) ^ x) * 0x45d9f3b | 0;
-  x = (x >> 16) ^ x;
-  const r = Math.abs(x) / 0x7fffffff;
-  if (isAvi) {
-    if (r < 0.35) return +(1 + r * 1.2).toFixed(2);
-    if (r < 0.60) return +(1.42 + r * 2).toFixed(2);
-    if (r < 0.78) return +(2.62 + r * 5).toFixed(2);
-    if (r < 0.90) return +(7 + r * 15).toFixed(2);
-    if (r < 0.97) return +(22 + r * 30).toFixed(2);
-    return +(52 + r * 150).toFixed(2);
-  }
-  if (r < 0.50) return +(1 + r * 0.8).toFixed(2);
-  if (r < 0.72) return +(1.4 + r * 1.5).toFixed(2);
-  if (r < 0.87) return +(2.8 + r * 5).toFixed(2);
-  if (r < 0.95) return +(7.8 + r * 12).toFixed(2);
-  if (r < 0.99) return +(19 + r * 15).toFixed(2);
-  return +(34 + r * 66).toFixed(2);
-}
-
-function newRound() {
-  const seed = Math.floor(Math.random() * 0x7fffffff);
-  const now = Date.now();
-  currentRound = {
-    id: now,
-    seed,
-    crashAt:    genCrashAt(seed, false),
-    aviCrashAt: genCrashAt(seed + 1, true),
-    startAt:    now + WAIT_MS,       // старт полёта
-    phase: 'waiting',                // waiting | flying | crashed
-  };
-  // Автопереход: ждём WAIT_MS, потом летим, потом краш
-  setTimeout(() => {
-    if (currentRound && currentRound.id === now) {
-      currentRound.phase = 'flying';
-    }
-  }, WAIT_MS);
-
-  // Рассчитаем время краша по множителю
-  // mult(t) = 1.055^(t*2.2) = crashAt => t = log(crashAt)/log(1.055)/2.2
-  const flightMs = Math.min(
-    Math.ceil(Math.log(currentRound.crashAt) / Math.log(1.055) / 2.2 * 1000) + 300,
-    MAX_FLIGHT
-  );
-  setTimeout(() => {
-    if (currentRound && currentRound.id === now) {
-      currentRound.phase = 'crashed';
-      // Начать новый раунд через 4 сек
-      setTimeout(newRound, 4000);
-    }
-  }, WAIT_MS + flightMs);
-
-  console.log(`🎮 Новый раунд #${now} | Crash: x${currentRound.crashAt} | Avi: x${currentRound.aviCrashAt} | Старт через ${WAIT_MS/1000}с`);
-}
-
-// Запускаем первый раунд при старте
-newRound();
 
 // ══════════════════════════════════════════════════
 // TELEGRAM
@@ -108,226 +41,167 @@ function sendTelegram(chatId, text) {
 }
 
 // ══════════════════════════════════════════════════
-// API ROUTES
+// ГЛАВНЫЙ ЭНДПОИНТ — проверка ключа
+// GET /check?key=XXXX&player_id=YYYY
 // ══════════════════════════════════════════════════
+app.get('/check', (req, res) => {
+  const { key, player_id } = req.query;
+  if (!key || !player_id) return res.json({ status: 'error', message: 'Введи Айди и ключ' });
 
-// Текущий раунд — главный эндпоинт для синхронизации
-app.get('/round', (req, res) => {
-  if (!currentRound) return res.json({ error: 'no round' });
+  const players = loadPlayers();
+  const p = players[player_id.toUpperCase()];
+
+  if (!p) return res.json({ status: 'error', message: '✕ Айди не найден' });
+  if (p.key !== key.toUpperCase()) return res.json({ status: 'error', message: '✕ Неверный ключ' });
+  if (p.banned) return res.json({ status: 'banned', message: p.banReason || 'Ваш аккаунт заблокирован.' });
+  if (p.frozen) return res.json({ status: 'frozen', message: p.freezeReason || 'Ваш аккаунт временно заморожен.' });
+
+  // Проверка срока действия
+  if (p.expiresAt && Date.now() > p.expiresAt) {
+    return res.json({ status: 'expired' });
+  }
+
+  const expiresIn = p.expiresAt ? p.expiresAt - Date.now() : null;
+
   res.json({
-    id:         currentRound.id,
-    seed:       currentRound.seed,
-    crashAt:    currentRound.crashAt,
-    aviCrashAt: currentRound.aviCrashAt,
-    startAt:    currentRound.startAt,
-    phase:      currentRound.phase,
-    serverTime: Date.now()
+    status: 'ok',
+    key: p.key,
+    playerId: p.playerId,
+    expiresIn
   });
 });
 
-// Регистрация
-app.post('/register', (req, res) => {
-  const { email, pass, id } = req.body;
-  if (!email || !pass || !id) return res.json({ ok: false, message: 'Неверные данные' });
+// ══════════════════════════════════════════════════
+// ДОБАВИТЬ ИГРОКА (вызывается из бота)
+// POST /addplayer { playerId, key, days, adminKey }
+// ══════════════════════════════════════════════════
+app.post('/addplayer', (req, res) => {
+  const { playerId, key, days, adminKey } = req.body;
+  if (adminKey !== process.env.ADMIN_SECRET || 'KING_ADMIN_SECRET') {
+    // Простая защита
+  }
+  if (!playerId || !key) return res.json({ ok: false, message: 'Нужен playerId и key' });
+
   const players = loadPlayers();
-  if (players[id]) return res.json({ ok: false, message: 'ID уже существует' });
+  const id = playerId.toUpperCase();
+  const k  = key.toUpperCase();
+
+  if (players[id]) return res.json({ ok: false, message: 'Этот Айди уже существует' });
+
+  const expiresAt = days && days > 0 ? Date.now() + days * 86400000 : null;
 
   players[id] = {
-    id, email,
-    pass: pass, // в реальном проекте надо хэшировать
-    balance: 1000,
-    createdAt: Date.now(),
-    banned: false
+    playerId: id,
+    key: k,
+    expiresAt,
+    banned: false,
+    frozen: false,
+    createdAt: Date.now()
   };
   savePlayers(players);
 
-  sendTelegram(ADMIN_ID,
-    `🆕 <b>НОВЫЙ ИГРОК MRWIN</b>\n\n` +
-    `🆔 ID: <code>${id}</code>\n` +
-    `📧 Email: <code>${email}</code>\n` +
-    `💰 Стартовый баланс: 1000 KGS\n` +
-    `📅 ${new Date().toLocaleString('ru')}\n\n` +
-    `🔨 Забанить: /ban ${id}\n` +
-    `💳 Начислить: /deposit ${id} СУММА`
-  );
-
-  res.json({ ok: true, balance: 1000 });
+  res.json({ ok: true, playerId: id, key: k, expiresAt });
 });
 
-// Вход
-app.post('/login', (req, res) => {
-  const { email, pass } = req.body;
-  if (!email || !pass) return res.json({ ok: false, message: 'Неверные данные' });
-  const players = loadPlayers();
-  const player = Object.values(players).find(p => p.email === email);
-  if (!player) return res.json({ ok: false, message: 'Email не найден' });
-  if (player.pass !== pass) return res.json({ ok: false, message: 'Неверный пароль' });
-  if (player.banned) return res.json({ ok: false, message: 'Аккаунт заблокирован' });
-  res.json({ ok: true, id: player.id, balance: player.balance || 1000 });
-});
-
-// Баланс
-app.get('/balance', (req, res) => {
-  const { player_id } = req.query;
-  const players = loadPlayers();
-  const p = players[player_id];
-  if (!p) return res.json({ balance: 0 });
-  res.json({ balance: p.balance || 0 });
-});
-
-// Обновить баланс
-app.post('/balance/update', (req, res) => {
-  const { player_id, balance } = req.body;
-  const players = loadPlayers();
-  if (!players[player_id]) return res.json({ ok: false });
-  players[player_id].balance = balance;
-  savePlayers(players);
-  res.json({ ok: true, balance });
-});
-
-// Заявка на пополнение
-app.post('/deposit/request', (req, res) => {
+// ══════════════════════════════════════════════════
+// БАН / РАЗБАН / ЗАМОРОЗКА
+// ══════════════════════════════════════════════════
+app.post('/ban', (req, res) => {
   const { playerId } = req.body;
   const players = loadPlayers();
-  const p = players[playerId];
-  sendTelegram(ADMIN_ID,
-    `💰 <b>ПОПОЛНЕНИЕ MRWIN</b>\n\n` +
-    `🆔 ID: <code>${playerId}</code>\n` +
-    `📧 Email: <code>${p ? p.email : '?'}</code>\n` +
-    `💳 Баланс: ${p ? p.balance : 0} KGS\n\n` +
-    `Начислить: /deposit ${playerId} СУММА`
-  );
-  res.json({ ok: true });
-});
-
-// Начислить баланс (команда /deposit ID СУММА через бота)
-app.post('/deposit/add', (req, res) => {
-  const { playerId, amount, adminKey } = req.body;
-  if (adminKey !== 'MRWIN_ADMIN_2024') return res.json({ ok: false, message: 'Нет доступа' });
-  const players = loadPlayers();
-  if (!players[playerId]) return res.json({ ok: false, message: 'Игрок не найден' });
-  players[playerId].balance = (players[playerId].balance || 0) + Number(amount);
-  savePlayers(players);
-  sendTelegram(ADMIN_ID, `✅ Начислено <b>${amount} KGS</b> игроку <code>${playerId}</code>\nНовый баланс: ${players[playerId].balance} KGS`);
-  res.json({ ok: true, balance: players[playerId].balance });
-});
-
-// Заявка на вывод
-app.post('/withdraw/request', (req, res) => {
-  const { playerId, amount, bank, cardNumber } = req.body;
-  const players = loadPlayers();
-  const p = players[playerId];
-  if (!p) return res.json({ ok: false, message: 'Игрок не найден' });
-  if (p.balance < amount) return res.json({ ok: false, message: 'Недостаточно средств' });
-  p.balance -= amount;
-  savePlayers(players);
-  sendTelegram(ADMIN_ID,
-    `📤 <b>ВЫВОД MRWIN</b>\n\n` +
-    `🆔 ID: <code>${playerId}</code>\n` +
-    `📧 Email: <code>${p.email}</code>\n` +
-    `💰 Сумма: <b>${amount} KGS</b>\n` +
-    `🏦 Банк: <b>${bank}</b>\n` +
-    `💳 Реквизиты: <code>${cardNumber}</code>\n` +
-    `💳 Остаток: ${p.balance} KGS`
-  );
-  res.json({ ok: true });
-});
-
-// Бан игрока
-app.post('/ban', (req, res) => {
-  const { playerId, adminKey } = req.body;
-  if (adminKey !== 'MRWIN_ADMIN_2024') return res.json({ ok: false });
-  const players = loadPlayers();
-  if (!players[playerId]) return res.json({ ok: false, message: 'Не найден' });
-  players[playerId].banned = true;
+  const id = (playerId || '').toUpperCase();
+  if (!players[id]) return res.json({ ok: false, message: 'Не найден' });
+  players[id].banned = true;
   savePlayers(players);
   res.json({ ok: true });
 });
 
-// Список игроков (только для тебя)
+app.post('/unban', (req, res) => {
+  const { playerId } = req.body;
+  const players = loadPlayers();
+  const id = (playerId || '').toUpperCase();
+  if (!players[id]) return res.json({ ok: false, message: 'Не найден' });
+  players[id].banned = false;
+  savePlayers(players);
+  res.json({ ok: true });
+});
+
+// ══════════════════════════════════════════════════
+// СПИСОК ИГРОКОВ
+// ══════════════════════════════════════════════════
 app.get('/players', (req, res) => {
-  const { adminKey } = req.query;
-  if (adminKey !== 'MRWIN_ADMIN_2024') return res.status(403).json({ error: 'Нет доступа' });
   const players = loadPlayers();
   const list = Object.values(players).map(p => ({
-    id: p.id, email: p.email, balance: p.balance, banned: p.banned,
+    playerId: p.playerId,
+    key: p.key,
+    banned: p.banned,
+    frozen: p.frozen,
+    expiresAt: p.expiresAt ? new Date(p.expiresAt).toLocaleString('ru') : '∞',
     createdAt: new Date(p.createdAt).toLocaleString('ru')
   }));
   res.json({ count: list.length, players: list });
 });
 
 // ══════════════════════════════════════════════════
-// TELEGRAM BOT WEBHOOK (команды админа)
+// WEBHOOK — команды из Telegram бота
 // ══════════════════════════════════════════════════
 app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
   const msg = req.body.message;
   if (!msg || String(msg.chat.id) !== ADMIN_ID) return res.json({});
 
-  const text = msg.text || '';
+  const text = (msg.text || '').trim();
   const parts = text.split(' ');
   const cmd = parts[0];
 
-  if (cmd === '/deposit' && parts.length >= 3) {
-    const pid = parts[1], amt = Number(parts[2]);
+  if (cmd === '/ban' && parts[1]) {
+    const id = parts[1].toUpperCase();
     const players = loadPlayers();
-    if (!players[pid]) { sendTelegram(ADMIN_ID, `❌ Игрок ${pid} не найден`); return res.json({}); }
-    players[pid].balance = (players[pid].balance || 0) + amt;
+    if (!players[id]) { sendTelegram(ADMIN_ID, `❌ Игрок <code>${id}</code> не найден`); return res.json({}); }
+    players[id].banned = true;
     savePlayers(players);
-    sendTelegram(ADMIN_ID, `✅ Начислено <b>${amt} KGS</b> игроку <code>${pid}</code>\nНовый баланс: <b>${players[pid].balance} KGS</b>`);
+    sendTelegram(ADMIN_ID, `🔨 Игрок <code>${id}</code> заблокирован`);
   }
 
-  else if (cmd === '/ban' && parts.length >= 2) {
-    const pid = parts[1];
+  else if (cmd === '/unban' && parts[1]) {
+    const id = parts[1].toUpperCase();
     const players = loadPlayers();
-    if (!players[pid]) { sendTelegram(ADMIN_ID, `❌ Игрок ${pid} не найден`); return res.json({}); }
-    players[pid].banned = true;
-    savePlayers(players);
-    sendTelegram(ADMIN_ID, `🔨 Игрок <code>${pid}</code> заблокирован`);
+    if (players[id]) { players[id].banned = false; savePlayers(players); }
+    sendTelegram(ADMIN_ID, `✅ Игрок <code>${id}</code> разблокирован`);
   }
 
-  else if (cmd === '/unban' && parts.length >= 2) {
-    const pid = parts[1];
+  else if (cmd === '/info' && parts[1]) {
+    const id = parts[1].toUpperCase();
     const players = loadPlayers();
-    if (players[pid]) { players[pid].banned = false; savePlayers(players); }
-    sendTelegram(ADMIN_ID, `✅ Игрок <code>${pid}</code> разблокирован`);
-  }
-
-  else if (cmd === '/balance' && parts.length >= 2) {
-    const pid = parts[1];
-    const players = loadPlayers();
-    const p = players[pid];
-    if (!p) { sendTelegram(ADMIN_ID, `❌ Не найден`); return res.json({}); }
-    sendTelegram(ADMIN_ID, `💰 Игрок <code>${pid}</code>\nEmail: ${p.email}\nБаланс: <b>${p.balance} KGS</b>\nСтатус: ${p.banned ? '🔨 Забанен' : '✅ Активен'}`);
+    const p = players[id];
+    if (!p) { sendTelegram(ADMIN_ID, `❌ Игрок <code>${id}</code> не найден`); return res.json({}); }
+    const exp = p.expiresAt ? new Date(p.expiresAt).toLocaleString('ru') : '∞';
+    sendTelegram(ADMIN_ID,
+      `👤 <b>Игрок: ${id}</b>\n\n` +
+      `🔑 Ключ: <code>${p.key}</code>\n` +
+      `📅 До: ${exp}\n` +
+      `🚦 Статус: ${p.banned ? '🔨 Забанен' : p.frozen ? '❄️ Заморожен' : '✅ Активен'}`
+    );
   }
 
   else if (cmd === '/players') {
     const players = loadPlayers();
     const list = Object.values(players);
-    let txt = `👥 <b>Игроки MRWIN (${list.length})</b>\n\n`;
+    let txt = `👥 <b>Игроки (${list.length})</b>\n\n`;
     list.slice(0, 20).forEach(p => {
-      txt += `${p.banned ? '🔨' : '✅'} <code>${p.id}</code> — ${p.email} — ${p.balance} KGS\n`;
+      const icon = p.banned ? '🔨' : p.frozen ? '❄️' : '✅';
+      txt += `${icon} <code>${p.playerId}</code> — ключ: <code>${p.key}</code>\n`;
     });
     if (list.length > 20) txt += `\n...и ещё ${list.length - 20}`;
     sendTelegram(ADMIN_ID, txt);
   }
 
-  else if (cmd === '/round') {
-    const r = currentRound;
-    if (!r) { sendTelegram(ADMIN_ID, 'Нет активного раунда'); return res.json({}); }
-    sendTelegram(ADMIN_ID,
-      `🎮 <b>Текущий раунд</b>\n\nФаза: ${r.phase}\nCrash: x${r.crashAt}\nAviator: x${r.aviCrashAt}\nСтарт: ${new Date(r.startAt).toLocaleTimeString('ru')}`
-    );
-  }
-
   else if (cmd === '/help') {
     sendTelegram(ADMIN_ID,
-      `📋 <b>Команды MRWIN</b>\n\n` +
-      `/deposit ID СУММА — начислить KGS\n` +
+      `📋 <b>KING SIGNAL — Команды</b>\n\n` +
       `/ban ID — заблокировать\n` +
       `/unban ID — разблокировать\n` +
-      `/balance ID — баланс игрока\n` +
-      `/players — список игроков\n` +
-      `/round — текущий раунд`
+      `/info ID — инфо об игроке\n` +
+      `/players — список всех`
     );
   }
 
@@ -335,9 +209,9 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
 });
 
 // Установить webhook
-app.get('/set-webhook', async (req, res) => {
+app.get('/set-webhook', (req, res) => {
   const url = `https://king-signal-server.onrender.com/webhook/${BOT_TOKEN}`;
-  const apiUrl = `https://api.telegram.org/bot${BOT_TOKEN}/setWebhook?url=${url}`;
+  const apiUrl = `https://api.telegram.org/bot${BOT_TOKEN}/setWebhook?url=${encodeURIComponent(url)}`;
   https.get(apiUrl, r => {
     let d = '';
     r.on('data', c => d += c);
@@ -345,11 +219,11 @@ app.get('/set-webhook', async (req, res) => {
   });
 });
 
-app.get('/', (req, res) => res.json({ status: 'MRWIN Server OK', round: currentRound?.phase || 'none' }));
+app.get('/', (req, res) => res.json({ status: 'KING SIGNAL Server OK' }));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ MRWIN Server запущен на порту ${PORT}`);
+  console.log(`✅ KING SIGNAL Server запущен на порту ${PORT}`);
   // Установить webhook автоматически
   setTimeout(() => {
     const url = `https://king-signal-server.onrender.com/webhook/${BOT_TOKEN}`;
