@@ -1,157 +1,110 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { MongoClient } = require('mongodb');
 
 const BOT_TOKEN = process.env.BOT_TOKEN || '8639490181:AAHlTgtVDsRuohlt0ZgcGV2h0J4vz7o5pLQ';
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://YOUR_USER:YOUR_PASS@cluster.mongodb.net/kingsignal';
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'supersecret123';
-const API_URL = process.env.API_URL || 'https://king-signal-server.onrender.com';
+const ADMIN_IDS = (process.env.ADMIN_IDS || '6697505756').split(',').map(s => s.trim());
+const API_URL   = process.env.API_URL || 'https://king-signal-server.onrender.com';
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-let db;
-MongoClient.connect(MONGO_URI).then(client => {
-  db = client.db('kingsignal');
-  console.log('✅ Бот: MongoDB подключён');
-}).catch(err => console.error('❌ MongoDB ошибка:', err));
-
-// Хранение состояний разговора
+// Состояния диалога
 const states = {};
 
 function isAdmin(chatId) {
-  const admins = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim());
-  return admins.includes(String(chatId));
+  return ADMIN_IDS.includes(String(chatId));
 }
 
-// ─── /start ───────────────────────────────────────────────────────────────────
+// ── /start ────────────────────────────────────────────────────────────────────
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   if (isAdmin(chatId)) {
     bot.sendMessage(chatId,
       `👑 <b>KING SIGNAL — ADMIN PANEL</b>\n\n` +
       `Команды:\n` +
-      `/deposit — начислить баланс игроку\n` +
-      `/withdraw — вывод игрока (просмотр заявок)\n` +
-      `/balance — проверить баланс игрока\n` +
-      `/addkey — добавить новый ключ\n` +
-      `/keys — список всех ключей\n` +
-      `/players — список игроков`,
+      `/addplayer — добавить нового игрока\n` +
+      `/players — список всех игроков\n` +
+      `/ban ID — заблокировать игрока\n` +
+      `/unban ID — разблокировать игрока\n` +
+      `/info ID — инфо об игроке`,
       { parse_mode: 'HTML' }
     );
   } else {
     bot.sendMessage(chatId,
-      `👑 <b>KING SIGNAL BOT</b>\n\nЭтот бот для администраторов.\nДля получения ключа: @vivoxz`,
+      `👑 <b>KING SIGNAL</b>\n\nЭтот бот только для администраторов.\nДля получения доступа: @vivoxz`,
       { parse_mode: 'HTML' }
     );
   }
 });
 
-// ─── /deposit — начислить баланс ─────────────────────────────────────────────
-bot.onText(/\/deposit(?:\s+(\S+))?(?:\s+(\d+))?/, async (msg, match) => {
+// ── /addplayer — добавить игрока ──────────────────────────────────────────────
+bot.onText(/\/addplayer/, (msg) => {
   const chatId = msg.chat.id;
   if (!isAdmin(chatId)) return;
+  states[chatId] = { action: 'addplayer_id' };
+  bot.sendMessage(chatId,
+    `➕ <b>ДОБАВИТЬ ИГРОКА</b>\n\nШаг 1/3 — Введи <b>Айди</b> игрока:\n<i>(например: PLAYER001)</i>`,
+    { parse_mode: 'HTML' }
+  );
+});
 
-  const playerId = match[1];
-  const amount = match[2];
-
-  if (playerId && amount) {
-    // Сразу начисляем
-    await doDeposit(chatId, playerId.toUpperCase(), Number(amount));
-  } else if (playerId) {
-    states[chatId] = { action: 'deposit_amount', playerId: playerId.toUpperCase() };
-    bot.sendMessage(chatId, `💰 Игрок: <b>${playerId.toUpperCase()}</b>\nВведи сумму для начисления (KGS):`, { parse_mode: 'HTML' });
-  } else {
-    states[chatId] = { action: 'deposit_id' };
-    bot.sendMessage(chatId, `💰 <b>НАЧИСЛЕНИЕ БАЛАНСА</b>\n\nВведи Айди игрока:`, { parse_mode: 'HTML' });
+// ── /ban ──────────────────────────────────────────────────────────────────────
+bot.onText(/\/ban(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  if (!isAdmin(chatId)) return;
+  const id = match[1];
+  if (!id) {
+    states[chatId] = { action: 'ban_id' };
+    return bot.sendMessage(chatId, `🔨 Введи Айди игрока для блокировки:`, { parse_mode: 'HTML' });
   }
+  await doBan(chatId, id.toUpperCase());
 });
 
-async function doDeposit(chatId, playerId, amount) {
-  try {
-    const result = await db.collection('players').findOneAndUpdate(
-      { playerId },
-      { $inc: { balance: amount }, $setOnInsert: { createdAt: Date.now() } },
-      { returnDocument: 'after', upsert: true }
-    );
-    const newBalance = result.balance;
-    bot.sendMessage(chatId,
-      `✅ <b>НАЧИСЛЕНО!</b>\n\nАйди: <code>${playerId}</code>\nНачислено: <b>+${amount} KGS</b>\nНовый баланс: <b>${newBalance} KGS</b>`,
-      { parse_mode: 'HTML' }
-    );
-    // Уведомляем игрока если есть его telegramId
-    const player = await db.collection('players').findOne({ playerId });
-    if (player && player.telegramChatId) {
-      bot.sendMessage(player.telegramChatId,
-        `💰 <b>Баланс пополнен!</b>\n\nНачислено: <b>+${amount} KGS</b>\nВаш баланс: <b>${newBalance} KGS</b>`,
-        { parse_mode: 'HTML' }
-      );
-    }
-  } catch (e) {
-    bot.sendMessage(chatId, `❌ Ошибка: ${e.message}`);
+// ── /unban ────────────────────────────────────────────────────────────────────
+bot.onText(/\/unban(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  if (!isAdmin(chatId)) return;
+  const id = match[1];
+  if (!id) {
+    states[chatId] = { action: 'unban_id' };
+    return bot.sendMessage(chatId, `✅ Введи Айди игрока для разблокировки:`, { parse_mode: 'HTML' });
   }
-}
+  await doUnban(chatId, id.toUpperCase());
+});
 
-// ─── /balance — проверить баланс ─────────────────────────────────────────────
-bot.onText(/\/balance(?:\s+(\S+))?/, async (msg, match) => {
+// ── /info ─────────────────────────────────────────────────────────────────────
+bot.onText(/\/info(?:\s+(\S+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
   if (!isAdmin(chatId)) return;
-
-  const playerId = match[1];
-  if (playerId) {
-    const player = await db.collection('players').findOne({ playerId: playerId.toUpperCase() });
-    if (!player) return bot.sendMessage(chatId, `❌ Игрок <code>${playerId.toUpperCase()}</code> не найден.`, { parse_mode: 'HTML' });
-    bot.sendMessage(chatId,
-      `💼 <b>БАЛАНС ИГРОКА</b>\n\nАйди: <code>${player.playerId}</code>\nКлюч: <code>${player.key || '—'}</code>\nБаланс: <b>${player.balance || 0} KGS</b>`,
-      { parse_mode: 'HTML' }
-    );
-  } else {
-    states[chatId] = { action: 'balance_id' };
-    bot.sendMessage(chatId, `🔍 Введи Айди игрока:`, { parse_mode: 'HTML' });
+  const id = match[1];
+  if (!id) {
+    states[chatId] = { action: 'info_id' };
+    return bot.sendMessage(chatId, `🔍 Введи Айди игрока:`, { parse_mode: 'HTML' });
   }
+  await doInfo(chatId, id.toUpperCase());
 });
 
-// ─── /addkey — добавить ключ ─────────────────────────────────────────────────
-bot.onText(/\/addkey/, (msg) => {
-  const chatId = msg.chat.id;
-  if (!isAdmin(chatId)) return;
-  states[chatId] = { action: 'addkey_key' };
-  bot.sendMessage(chatId, `🔑 <b>ДОБАВИТЬ КЛЮЧ</b>\n\nВведи ключ (например: KING123456):`, { parse_mode: 'HTML' });
-});
-
-// ─── /keys — список ключей ────────────────────────────────────────────────────
-bot.onText(/\/keys/, async (msg) => {
-  const chatId = msg.chat.id;
-  if (!isAdmin(chatId)) return;
-  const keys = await db.collection('keys').find({}).limit(20).toArray();
-  if (!keys.length) return bot.sendMessage(chatId, '📋 Ключей нет.');
-  const lines = keys.map(k => {
-    const exp = k.expiresAt ? new Date(k.expiresAt).toLocaleDateString('ru') : '∞';
-    const status = k.status || 'active';
-    return `<code>${k.key}</code> | ${k.playerId || '—'} | ${exp} | ${status}`;
-  });
-  bot.sendMessage(chatId, `🔑 <b>КЛЮЧИ (последние 20):</b>\n\n${lines.join('\n')}`, { parse_mode: 'HTML' });
-});
-
-// ─── /players — список игроков ────────────────────────────────────────────────
+// ── /players ──────────────────────────────────────────────────────────────────
 bot.onText(/\/players/, async (msg) => {
   const chatId = msg.chat.id;
   if (!isAdmin(chatId)) return;
-  const players = await db.collection('players').find({}).limit(20).toArray();
-  if (!players.length) return bot.sendMessage(chatId, '👥 Игроков нет.');
-  const lines = players.map(p => `<code>${p.playerId}</code> | <b>${p.balance || 0} KGS</b> | ключ: ${p.key || '—'}`);
-  bot.sendMessage(chatId, `👥 <b>ИГРОКИ (последние 20):</b>\n\n${lines.join('\n')}`, { parse_mode: 'HTML' });
+  try {
+    const res = await fetch(`${API_URL}/players`);
+    const data = await res.json();
+    if (!data.players || !data.players.length) {
+      return bot.sendMessage(chatId, '👥 Игроков пока нет.');
+    }
+    let txt = `👥 <b>Игроки (${data.count})</b>\n\n`;
+    data.players.slice(0, 20).forEach(p => {
+      const icon = p.banned ? '🔨' : p.frozen ? '❄️' : '✅';
+      const exp = p.expiresAt || '∞';
+      txt += `${icon} <code>${p.playerId}</code>\n🔑 <code>${p.key}</code> | до: ${exp}\n\n`;
+    });
+    bot.sendMessage(chatId, txt, { parse_mode: 'HTML' });
+  } catch (e) {
+    bot.sendMessage(chatId, `❌ Ошибка: ${e.message}`);
+  }
 });
 
-// ─── /cancel_withdraw — вернуть сумму игроку ─────────────────────────────────
-bot.onText(/\/cancel_withdraw\s+(\S+)\s+(\d+)/, async (msg, match) => {
-  const chatId = msg.chat.id;
-  if (!isAdmin(chatId)) return;
-  const playerId = match[1].toUpperCase();
-  const amount = Number(match[2]);
-  await db.collection('players').updateOne({ playerId }, { $inc: { balance: amount } });
-  bot.sendMessage(chatId, `↩️ Возвращено <b>${amount} KGS</b> игроку <code>${playerId}</code>`, { parse_mode: 'HTML' });
-});
-
-// ─── ОБРАБОТКА ТЕКСТОВЫХ СООБЩЕНИЙ (состояния) ───────────────────────────────
+// ── ОБРАБОТКА ТЕКСТА (пошаговые диалоги) ─────────────────────────────────────
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = (msg.text || '').trim();
@@ -161,39 +114,138 @@ bot.on('message', async (msg) => {
   const state = states[chatId];
   if (!state) return;
 
-  if (state.action === 'deposit_id') {
-    states[chatId] = { action: 'deposit_amount', playerId: text.toUpperCase() };
-    bot.sendMessage(chatId, `💰 Игрок: <b>${text.toUpperCase()}</b>\nВведи сумму (KGS):`, { parse_mode: 'HTML' });
-  }
-  else if (state.action === 'deposit_amount') {
-    const amount = Number(text);
-    if (isNaN(amount) || amount <= 0) return bot.sendMessage(chatId, '❌ Введи корректную сумму.');
-    delete states[chatId];
-    await doDeposit(chatId, state.playerId, amount);
-  }
-  else if (state.action === 'balance_id') {
-    delete states[chatId];
-    const player = await db.collection('players').findOne({ playerId: text.toUpperCase() });
-    if (!player) return bot.sendMessage(chatId, `❌ Игрок не найден.`);
+  // ── Добавление игрока: шаг 1 — Айди
+  if (state.action === 'addplayer_id') {
+    states[chatId] = { action: 'addplayer_key', playerId: text.toUpperCase() };
     bot.sendMessage(chatId,
-      `💼 Айди: <code>${player.playerId}</code>\nБаланс: <b>${player.balance || 0} KGS</b>`,
+      `➕ Айди: <b>${text.toUpperCase()}</b>\n\nШаг 2/3 — Введи <b>Ключ</b> для этого игрока:\n<i>(например: KING-ABC123)</i>`,
       { parse_mode: 'HTML' }
     );
   }
-  else if (state.action === 'addkey_key') {
-    states[chatId] = { action: 'addkey_days', key: text.toUpperCase() };
-    bot.sendMessage(chatId, `🔑 Ключ: <b>${text.toUpperCase()}</b>\nНа сколько дней? (0 = бессрочный):`, { parse_mode: 'HTML' });
-  }
-  else if (state.action === 'addkey_days') {
-    const days = Number(text);
-    const expiresAt = days > 0 ? Date.now() + days * 86400000 : null;
-    delete states[chatId];
-    await db.collection('keys').insertOne({ key: state.key, status: 'active', expiresAt, createdAt: Date.now() });
+
+  // ── Добавление игрока: шаг 2 — Ключ
+  else if (state.action === 'addplayer_key') {
+    states[chatId] = { action: 'addplayer_days', playerId: state.playerId, key: text.toUpperCase() };
     bot.sendMessage(chatId,
-      `✅ Ключ <code>${state.key}</code> добавлен!\n${days > 0 ? `Действует ${days} дн.` : 'Бессрочный'}`,
+      `➕ Ключ: <b>${text.toUpperCase()}</b>\n\nШаг 3/3 — На сколько <b>дней</b> доступ?\n<i>(введи 0 для бессрочного)</i>`,
       { parse_mode: 'HTML' }
     );
+  }
+
+  // ── Добавление игрока: шаг 3 — Дни → сохраняем
+  else if (state.action === 'addplayer_days') {
+    const days = parseInt(text, 10);
+    if (isNaN(days) || days < 0) {
+      return bot.sendMessage(chatId, '❌ Введи число (например: 30 или 0)');
+    }
+    delete states[chatId];
+    await doAddPlayer(chatId, state.playerId, state.key, days);
+  }
+
+  // ── Бан
+  else if (state.action === 'ban_id') {
+    delete states[chatId];
+    await doBan(chatId, text.toUpperCase());
+  }
+
+  // ── Разбан
+  else if (state.action === 'unban_id') {
+    delete states[chatId];
+    await doUnban(chatId, text.toUpperCase());
+  }
+
+  // ── Инфо
+  else if (state.action === 'info_id') {
+    delete states[chatId];
+    await doInfo(chatId, text.toUpperCase());
   }
 });
 
-console.log('🤖 Бот запущен...');
+// ── ФУНКЦИИ ───────────────────────────────────────────────────────────────────
+
+async function doAddPlayer(chatId, playerId, key, days) {
+  try {
+    const res = await fetch(`${API_URL}/addplayer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playerId, key, days })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const expText = days > 0 ? `${days} дней` : 'Бессрочный';
+      bot.sendMessage(chatId,
+        `✅ <b>ИГРОК ДОБАВЛЕН!</b>\n\n` +
+        `🆔 Айди: <code>${playerId}</code>\n` +
+        `🔑 Ключ: <code>${key}</code>\n` +
+        `📅 Срок: <b>${expText}</b>\n\n` +
+        `Отправь игроку его данные:\n` +
+        `——————————\n` +
+        `🆔 Айди: <code>${playerId}</code>\n` +
+        `🔑 Ключ: <code>${key}</code>\n` +
+        `——————————`,
+        { parse_mode: 'HTML' }
+      );
+    } else {
+      bot.sendMessage(chatId, `❌ Ошибка: ${data.message}`);
+    }
+  } catch (e) {
+    bot.sendMessage(chatId, `❌ Нет соединения с сервером: ${e.message}`);
+  }
+}
+
+async function doBan(chatId, playerId) {
+  try {
+    const res = await fetch(`${API_URL}/ban`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playerId })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      bot.sendMessage(chatId, `🔨 Игрок <code>${playerId}</code> заблокирован`, { parse_mode: 'HTML' });
+    } else {
+      bot.sendMessage(chatId, `❌ ${data.message}`);
+    }
+  } catch (e) {
+    bot.sendMessage(chatId, `❌ Ошибка: ${e.message}`);
+  }
+}
+
+async function doUnban(chatId, playerId) {
+  try {
+    const res = await fetch(`${API_URL}/unban`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playerId })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      bot.sendMessage(chatId, `✅ Игрок <code>${playerId}</code> разблокирован`, { parse_mode: 'HTML' });
+    } else {
+      bot.sendMessage(chatId, `❌ ${data.message}`);
+    }
+  } catch (e) {
+    bot.sendMessage(chatId, `❌ Ошибка: ${e.message}`);
+  }
+}
+
+async function doInfo(chatId, playerId) {
+  try {
+    const res = await fetch(`${API_URL}/players`);
+    const data = await res.json();
+    const p = (data.players || []).find(x => x.playerId === playerId);
+    if (!p) return bot.sendMessage(chatId, `❌ Игрок <code>${playerId}</code> не найден`, { parse_mode: 'HTML' });
+    const icon = p.banned ? '🔨 Забанен' : p.frozen ? '❄️ Заморожен' : '✅ Активен';
+    bot.sendMessage(chatId,
+      `👤 <b>Игрок: ${p.playerId}</b>\n\n` +
+      `🔑 Ключ: <code>${p.key}</code>\n` +
+      `📅 До: ${p.expiresAt || '∞'}\n` +
+      `🚦 Статус: ${icon}`,
+      { parse_mode: 'HTML' }
+    );
+  } catch (e) {
+    bot.sendMessage(chatId, `❌ Ошибка: ${e.message}`);
+  }
+}
+
+console.log('🤖 KING SIGNAL Бот запущен...');
