@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>KING SIGNAL</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#030308;
+  --card:#08080f;
+  --c1:#6d28d9;
+  --c2:#8b5cf6;
+  --c3:#a78bfa;
+  --gold:#f59e0b;
+  --red:#ef4444;
+  --green:#10b981;
+  --blue:#38bdf8;
+  --text:#ede9fe;
+  --muted:rgba(237,233,254,0.35);
+  --border:rgba(109,40,217,0.25);
+  --glow:rgba(139,92,246,0.6);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  background:var(--bg);
+  min-height:100vh;
+  font-family:'Orbitron',sans-serif;
+  color:var(--text);
+  overflow-x:hidden;
+}
+
+/* Animated background */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(109,40,217,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(167,139,250,0.1) 0%, transparent 55%);
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(109,40,217,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(109,40,217,0.035) 1px, transparent 1px);
+  background-size:56px 56px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── SCREENS ── */
+.screen{
+  display:none;min-height:100vh;width:100%;
+  position:relative;z-index:10;
+  flex-direction:column;
+  animation:fadeUp 0.35s cubic-bezier(0.22,1,0.36,1) both;
+}
+.screen.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── TOPBAR ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 24px 0;
+}
+.brand{
+  font-weight:900;font-size:20px;letter-spacing:4px;
+  background:linear-gradient(90deg,#a78bfa,#c4b5fd,#e879f9);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 14px rgba(167,139,250,0.55));
+}
+.status-pill{
+  display:flex;align-items:center;gap:6px;
+  border-radius:20px;padding:5px 13px;
+  font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;
+}
+.online-pill{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);color:var(--green);}
+.offline-pill{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);}
+.status-dot{width:6px;height:6px;border-radius:50%;}
+.online-dot{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s ease infinite;}
+.offline-dot{background:var(--red);box-shadow:0 0 8px var(--red);animation:blink 1s ease infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* ── LOGIN ── */
+.login-hero{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 24px;
+}
+.crown-wrap{position:relative;margin-bottom:32px;text-align:center;}
+.crown-pulse{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:130px;height:130px;
+  background:radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%);
+  border-radius:50%;
+  animation:pulse-glow 2.8s ease-in-out infinite;
+}
+@keyframes pulse-glow{
+  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.5;}
+  50%{transform:translate(-50%,-50%) scale(1.35);opacity:1;}
+}
+.crown-emoji{
+  font-size:64px;position:relative;z-index:1;display:block;
+  animation:float 3.5s ease-in-out infinite;
+  filter:drop-shadow(0 0 22px rgba(167,139,250,0.9));
+}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+
+.hero-title{
+  font-weight:900;font-size:44px;letter-spacing:7px;
+  line-height:1;text-align:center;
+  background:linear-gradient(135deg,#a78bfa,#c4b5fd,#e879f9,#a78bfa);
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:shine 4s linear infinite;
+  filter:drop-shadow(0 0 28px rgba(139,92,246,0.45));
+  margin-bottom:6px;
+}
+@keyframes shine{to{background-position:200% center;}}
+.hero-sub{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;letter-spacing:7px;
+  color:rgba(237,233,254,0.2);text-align:center;
+  margin-bottom:44px;
+}
+
+/* Login card */
+.login-card{
+  width:100%;max-width:340px;
+  background:linear-gradient(145deg,rgba(8,8,15,0.95),rgba(12,8,22,0.98));
+  border:1px solid var(--border);border-radius:18px;
+  padding:30px 24px;position:relative;overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,0.7),inset 0 1px 0 rgba(167,139,250,0.08);
+}
+.login-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#8b5cf6,#e879f9,transparent);
+}
+.field-lbl{
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:8px;
+}
+.inp-wrap{position:relative;margin-bottom:8px;}
+.inp-ico{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  font-size:15px;opacity:0.3;
+}
+.inp{
+  width:100%;
+  background:rgba(109,40,217,0.05);
+  border:1px solid rgba(109,40,217,0.22);
+  border-radius:10px;
+  padding:13px 14px 13px 42px;
+  color:#fff;
+  font-family:'Share Tech Mono',monospace;
+  font-size:13px;letter-spacing:2px;
+  outline:none;
+  transition:border-color 0.2s,background 0.2s,box-shadow 0.2s;
+}
+.inp:focus{border-color:var(--c2);background:rgba(109,40,217,0.09);box-shadow:0 0 0 3px rgba(109,40,217,0.14);}
+.inp::placeholder{color:rgba(255,255,255,0.12);}
+.inp.err-shake{animation:shake 0.35s ease;border-color:var(--red)!important;}
+@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-6px);}40%,80%{transform:translateX(6px);}}
+.inp-gap{margin-top:16px;}
+.err-msg{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--red);min-height:18px;margin-top:6px;letter-spacing:1px;}
+.btn-main{
+  width:100%;margin-top:20px;
+  background:linear-gradient(135deg,#5b21b6,#7c3aed,#8b5cf6);
+  color:#fff;
+  font-family:'Orbitron',sans-serif;font-weight:700;font-size:14px;letter-spacing:5px;
+  padding:15px;border:none;border-radius:10px;cursor:pointer;
+  position:relative;overflow:hidden;
+  transition:transform 0.15s,box-shadow 0.2s;
+  box-shadow:0 4px 28px rgba(109,40,217,0.45);
+}
+.btn-main::after{
+  content:'';position:absolute;inset:-50%;
+  background:linear-gradient(transparent,rgba(255,255,255,0.04),transparent);
+  transform:translateY(-100%) rotate(45deg);
+  transition:transform 0.5s;
+}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(109,40,217,0.6);}
+.btn-main:hover::after{transform:translateY(100%) rotate(45deg);}
+.btn-main:active{transform:translateY(1px);}
+.btn-main:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
+
+/* ── PLATFORM ── */
+.plat-hero{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:30px 22px;
+}
+.plat-hd{text-align:center;margin-bottom:38px;}
+.plat-hd h2{font-weight:900;font-size:28px;letter-spacing:5px;color:var(--text);margin-bottom:8px;}
+.plat-hd p{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:5px;color:var(--muted);}
+
+/* Key info box */
+.key-info-box{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(109,40,217,0.07);
+  border:1px solid rgba(109,40,217,0.2);
+  border-radius:12px;padding:12px 16px;
+  margin-bottom:30px;width:100%;max-width:340px;
+}
+.ki-icon{font-size:18px;opacity:0.6;}
+.ki-text{flex:1;}
+.ki-key{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--c3);letter-spacing:1px;}
+.ki-exp{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:3px;}
+.ki-logout{
+  background:transparent;border:1px solid rgba(109,40,217,0.25);
+  color:var(--muted);font-family:'Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:1px;padding:5px 10px;
+  border-radius:7px;cursor:pointer;transition:border-color 0.2s,color 0.2s;
+}
+.ki-logout:hover{border-color:var(--c2);color:var(--c2);}
+
+.plat-grid{display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px;}
+.plat-tile{
+  background:var(--card);border-radius:16px;padding:20px 18px;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:transform 0.2s,box-shadow 0.2s;
+  display:flex;align-items:center;gap:16px;
+}
+.plat-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;}
+.plat-tile:hover{transform:translateY(-3px);}
+.pt-blue{border:1px solid rgba(56,189,248,0.2);}
+.pt-blue::before{background:linear-gradient(90deg,transparent,#38bdf8,transparent);}
+.pt-blue:hover{box-shadow:0 10px 32px rgba(56,189,248,0.18);border-color:rgba(56,189,248,0.45);}
+.pt-gold{border:1px solid rgba(245,158,11,0.2);}
+.pt-gold::before{background:linear-gradient(90deg,transparent,#f59e0b,transparent);}
+.pt-gold:hover{box-shadow:0 10px 32px rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.45);}
+.pt-ico{width:52px;height:52px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.pt-ico-blue{background:linear-gradient(135deg,rgba(56,189,248,0.18),rgba(14,165,233,0.08));box-shadow:0 4px 16px rgba(56,189,248,0.18);}
+.pt-ico-gold{background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(217,119,6,0.08));box-shadow:0 4px 16px rgba(245,158,11,0.18);}
+.pt-info{flex:1;}
+.pt-name{font-weight:900;font-size:22px;letter-spacing:3px;line-height:1;}
+.pt-name-blue{color:#38bdf8;filter:drop-shadow(0 0 8px rgba(56,189,248,0.45));}
+.pt-name-gold{color:#f59e0b;filter:drop-shadow(0 0 8px rgba(245,158,11,0.45));}
+.pt-games{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:5px;}
+.pt-arr{font-size:22px;color:var(--muted);opacity:0.5;}
+
+/* ── GAMES ── */
+.games-wrap{flex:1;padding:18px 20px 36px;}
+.games-nav{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.btn-back{
+  background:rgba(109,40,217,0.08);
+  border:1px solid rgba(109,40,217,0.22);
+  color:var(--muted);font-family:'Orbitron',sans-serif;
+  font-size:11px;letter-spacing:2px;
+  padding:8px 14px;border-radius:8px;cursor:pointer;
+  transition:border-color 0.2s,color 0.2s;
+}
+.btn-back:hover{border-color:var(--c2);color:var(--c3);}
+.plat-badge-lbl{font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:3px;}
+.games-hd{margin-bottom:22px;}
+.games-title{font-weight:900;font-size:26px;letter-spacing:5px;color:var(--text);margin-bottom:4px;}
+.games-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:4px;}
+.games-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.game-tile{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:22px 14px;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:border-color 0.2s,transform 0.2s,box-shadow 0.2s;
+}
+.game-tile:hover{border-color:var(--c2);transform:translateY(-3px);box-shadow:0 8px 28px rgba(109,40,217,0.2);}
+.gt-badge{
+  position:absolute;top:10px;right:10px;
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
+  color:var(--green);background:rgba(16,185,129,0.1);
+  border:1px solid rgba(16,185,129,0.25);padding:2px 7px;border-radius:4px;
+}
+.gt-ico{font-size:34px;margin-bottom:10px;display:block;}
+.gt-name{font-weight:700;font-size:14px;letter-spacing:2px;color:var(--c3);}
+.gt-desc{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;letter-spacing:1px;}
+.game-tile-full{grid-column:1/-1;}
+
+/* ── SIGNAL SCREEN ── */
+.sig-nav{display:flex;align-items:center;padding:20px 20px 0;gap:12px;}
+.sig-game-lbl{font-weight:700;font-size:14px;letter-spacing:3px;color:var(--muted);}
+
+.sig-body{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px 20px 36px;
+}
+
+/* Radar orb */
+.sig-orb{
+  position:relative;
+  width:clamp(230px,62vw,290px);
+  height:clamp(230px,62vw,290px);
+  margin-bottom:32px;
+}
+.orb-ring1{
+  position:absolute;inset:0;border-radius:50%;
+  border:2px solid transparent;
+  border-top-color:var(--c2);
+  border-right-color:rgba(139,92,246,0.2);
+  animation:spin1 3.5s linear infinite;
+}
+.orb-ring2{
+  position:absolute;inset:16px;border-radius:50%;
+  border:1px solid transparent;
+  border-bottom-color:var(--c3);
+  border-left-color:rgba(196,181,253,0.15);
+  animation:spin1 2.2s linear infinite reverse;
+}
+.orb-ring3{
+  position:absolute;inset:30px;border-radius:50%;
+  border:1px dashed rgba(109,40,217,0.14);
+  animation:spin1 9s linear infinite;
+}
+@keyframes spin1{to{transform:rotate(360deg);}}
+
+/* Corner accents on the orb */
+.orb-ring4{
+  position:absolute;inset:8px;border-radius:50%;
+  border:1px solid transparent;
+  border-top-color:rgba(232,121,249,0.12);
+  border-bottom-color:rgba(232,121,249,0.12);
+  animation:spin1 5s linear infinite;
+}
+
+.scan-container{position:absolute;inset:42px;border-radius:50%;overflow:hidden;pointer-events:none;}
+.scan-container::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(139,92,246,0.7),transparent);
+  animation:scan-anim 2.4s ease-in-out infinite;
+}
+@keyframes scan-anim{
+  0%{transform:translateY(0);opacity:0;}
+  15%{opacity:1;}
+  85%{opacity:1;}
+  100%{transform:translateY(calc(clamp(146px,39vw,206px)));opacity:0;}
+}
+
+.orb-core{
+  position:absolute;inset:42px;border-radius:50%;
+  background:radial-gradient(circle at 40% 36%, #0a0a16 0%, #030308 100%);
+  border:1px solid rgba(255,255,255,0.04);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:inset 0 0 40px rgba(0,0,0,0.7);
+}
+.sig-val{
+  font-weight:900;font-size:clamp(32px,9vw,56px);color:#fff;
+  line-height:1;
+  opacity:0;transform:scale(0.65) translateY(10px);
+  transition:opacity 0.3s,transform 0.38s cubic-bezier(0.34,1.56,0.64,1);
+  letter-spacing:1px;
+}
+.sig-val.show{opacity:1;transform:scale(1) translateY(0);}
+.sig-val.big{color:var(--c3);text-shadow:0 0 32px rgba(167,139,250,0.65);}
+.sig-val.mega{color:#fb923c;text-shadow:0 0 38px rgba(251,146,60,0.75);}
+.sig-sublbl{
+  font-family:'Share Tech Mono',monospace;font-size:8px;
+  letter-spacing:6px;color:rgba(255,255,255,0.18);margin-top:6px;
+  opacity:0;transition:opacity 0.3s 0.12s;
+}
+.sig-sublbl.show{opacity:1;}
+
+/* Stats */
+.sig-stats{display:flex;gap:28px;margin-bottom:28px;align-items:center;}
+.stat{text-align:center;}
+.stat-num{font-family:'Share Tech Mono',monospace;font-size:20px;color:var(--c2);font-weight:700;}
+.stat-lbl{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;margin-top:3px;}
+.stat-sep{width:1px;height:38px;background:var(--border);}
+
+/* Signal button */
+.sig-btn{
+  background:linear-gradient(135deg,#4c1d95,#6d28d9,#7c3aed);
+  color:#fff;font-family:'Orbitron',sans-serif;font-weight:700;
+  font-size:15px;letter-spacing:6px;
+  padding:16px 54px;border:none;border-radius:12px;cursor:pointer;
+  position:relative;overflow:hidden;
+  box-shadow:0 4px 28px rgba(109,40,217,0.45);
+  transition:transform 0.15s,box-shadow 0.2s,opacity 0.2s;
+}
+.sig-btn::before{
+  content:'';position:absolute;inset:-1px;border-radius:12px;
+  background:linear-gradient(135deg,rgba(255,255,255,0.06),transparent);
+  pointer-events:none;
+}
+.sig-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 36px rgba(109,40,217,0.6);}
+.sig-btn:active:not(:disabled){transform:translateY(1px);}
+.sig-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* Cooldown bar */
+.cd-wrap{width:100%;max-width:280px;margin-top:16px;}
+.cd-track{width:100%;height:2px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;visibility:hidden;}
+.cd-track.on{visibility:visible;}
+.cd-prog{height:100%;width:0%;background:linear-gradient(90deg,var(--c1),var(--c3));}
+.cd-txt{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:9px;text-align:center;min-height:15px;}
+
+/* ── MODALS / OVERLAYS ── */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.88);z-index:500;
+  align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(8px);
+}
+.overlay.open{display:flex;}
+.modal{
+  background:#0a0a16;
+  border-radius:18px;padding:30px 24px;
+  max-width:320px;width:100%;text-align:center;
+  position:relative;overflow:hidden;
+}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.modal-warn{border:1px solid rgba(239,68,68,0.3);}
+.modal-warn::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
+.modal-purple{border:1px solid rgba(109,40,217,0.35);}
+.modal-purple::before{background:linear-gradient(90deg,transparent,var(--c2),transparent);}
+.m-ico{font-size:46px;margin-bottom:14px;}
+.m-title{font-weight:900;font-size:18px;letter-spacing:5px;color:var(--text);margin-bottom:12px;}
+.m-body{font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.9;color:var(--muted);margin-bottom:24px;}
+.m-body strong{color:var(--gold);}
+.m-body .pct{color:var(--blue);}
+.m-btn{
+  width:100%;font-family:'Orbitron',sans-serif;font-weight:700;
+  font-size:13px;letter-spacing:4px;
+  padding:13px;border:none;border-radius:10px;cursor:pointer;
+  transition:transform 0.15s;margin-bottom:10px;color:#fff;
+}
+.m-btn:last-child{margin-bottom:0;}
+.m-btn:hover{transform:translateY(-1px);}
+.m-btn-red{background:linear-gradient(135deg,#b91c1c,#ef4444);box-shadow:0 4px 20px rgba(239,68,68,0.3);}
+.m-btn-purple{background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 4px 20px rgba(109,40,217,0.3);}
+.m-btn-outline{background:transparent;border:1px solid rgba(109,40,217,0.3);color:var(--muted);box-shadow:none;}
+
+/* ── STATUS SCREENS ── */
+.status-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+.status-ico{font-size:60px;margin-bottom:22px;display:block;animation:float 3.5s ease-in-out infinite;}
+.status-title{font-weight:900;font-size:22px;letter-spacing:5px;margin-bottom:12px;}
+.status-title-red{color:var(--red);filter:drop-shadow(0 0 12px rgba(239,68,68,0.5));}
+.status-title-gold{color:var(--gold);filter:drop-shadow(0 0 12px rgba(245,158,11,0.5));}
+.status-title-blue{color:var(--blue);filter:drop-shadow(0 0 12px rgba(56,189,248,0.5));}
+.status-msg{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;margin-bottom:30px;letter-spacing:1px;max-width:280px;}
+
+/* ── FOOTER TAGLINE ── */
+.tagline{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  letter-spacing:4px;color:rgba(255,255,255,0.06);
+  text-align:center;padding:20px 0 14px;margin-top:auto;
+}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div class="screen active" id="s-key">
+  <div class="topbar">
+    <div class="brand">KING SIGNAL</div>
+    <div class="status-pill offline-pill"><div class="status-dot offline-dot"></div>OFFLINE</div>
+  </div>
+  <div class="login-hero">
+    <div class="crown-wrap">
+      <div class="crown-pulse"></div>
+      <span class="crown-emoji">👑</span>
+    </div>
+    <div class="hero-title">KING</div>
+    <div class="hero-sub">SIGNAL · SYSTEM</div>
+    <div class="login-card">
+      <div class="field-lbl">PLAYER ID</div>
+      <div class="inp-wrap">
+        <span class="inp-ico">👤</span>
+        <input class="inp" id="loginIdInp" placeholder="ENTER YOUR ID" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field-lbl inp-gap">ACCESS KEY</div>
+      <div class="inp-wrap">
+        <span class="inp-ico">🔑</span>
+        <input class="inp" id="loginKeyInp" placeholder="ENTER YOUR KEY" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="err-msg" id="loginErr"></div>
+      <button class="btn-main" onclick="doLogin()">ВОЙТИ</button>
+    </div>
+  </div>
+  <div class="tagline">KING SIGNAL v6.0 · AI POWERED</div>
+</div>
+
+<!-- ── PLATFORM SELECT ── -->
+<div class="screen" id="s-platform">
+  <div class="topbar">
+    <div class="brand">KING SIGNAL</div>
+    <div class="status-pill online-pill"><div class="status-dot online-dot"></div>ONLINE</div>
+  </div>
+  <div class="plat-hero">
+    <div class="key-info-box">
+      <div class="ki-icon">🔑</div>
+      <div class="ki-text">
+        <div class="ki-key" id="kiKeyDisp">—</div>
+        <div class="ki-exp" id="kiExpDisp">—</div>
+      </div>
+      <button class="ki-logout" onclick="goToKeyScreen()">ВЫЙТИ</button>
+    </div>
+    <div class="plat-hd">
+      <h2>ПЛАТФОРМА</h2>
+      <p>ВЫБЕРИ ПЛОЩАДКУ</p>
+    </div>
+    <div class="plat-grid">
+      <div class="plat-tile pt-blue" onclick="selectPlatform('1xbet')">
+        <div class="pt-ico pt-ico-blue">🎲</div>
+        <div class="pt-info">
+          <div class="pt-name pt-name-blue">1XBET</div>
+          <div class="pt-games">LUCKY JET · AVIATOR · JET X</div>
+        </div>
+        <div class="pt-arr">›</div>
+      </div>
+      <div class="plat-tile pt-gold" onclick="selectPlatform('1win')">
+        <div class="pt-ico pt-ico-gold">🏆</div>
+        <div class="pt-info">
+          <div class="pt-name pt-name-gold">1WIN</div>
+          <div class="pt-games">LUCKY JET · ROCKET</div>
+        </div>
+        <div class="pt-arr">›</div>
+      </div>
+    </div>
+  </div>
+  <div class="tagline">KING SIGNAL v6.0</div>
+</div>
+
+<!-- ── GAMES LIST ── -->
+<div class="screen" id="s-games">
+  <div class="topbar">
+    <div class="brand">KING SIGNAL</div>
+    <div class="status-pill online-pill"><div class="status-dot online-dot"></div>ONLINE</div>
+  </div>
+  <div class="games-wrap">
+    <div class="games-nav">
+      <button class="btn-back" onclick="show('s-platform')">← НАЗАД</button>
+      <div class="plat-badge-lbl" id="platformBadge"></div>
+    </div>
+    <div class="games-hd">
+      <div class="games-title">ИГРЫ</div>
+      <div class="games-sub">ВЫБЕРИ ИГРУ · ПОЛУЧИ СИГНАЛ</div>
+    </div>
+    <div class="games-grid" id="gamesGrid"></div>
+  </div>
+  <div class="tagline">KING SIGNAL v6.0</div>
+</div>
+
+<!-- ── WARNING OVERLAY ── -->
+<div class="overlay" id="warnOverlay">
+  <div class="modal modal-warn">
+    <div class="m-ico">⚠️</div>
+    <div class="m-title">ВНИМАНИЕ</div>
+    <div class="m-body">
+      Точность сигнала — <span class="pct">70%</span><br>
+      Возможны <strong>неточные прогнозы</strong>.<br><br>
+      Используйте на свой страх и риск.
+    </div>
+    <button class="m-btn m-btn-red" onclick="confirmWarning()">ПОНЯЛ — ВОЙТИ</button>
+  </div>
+</div>
+
+<!-- ── SIGNAL SCREEN ── -->
+<div class="screen" id="s-signal">
+  <div class="sig-nav">
+    <button class="btn-back" onclick="show('s-games')">← НАЗАД</button>
+    <div class="sig-game-lbl" id="signalGameLbl"></div>
+  </div>
+  <div class="sig-body">
+    <div class="sig-orb">
+      <div class="orb-ring4"></div>
+      <div class="orb-ring1"></div>
+      <div class="orb-ring2"></div>
+      <div class="orb-ring3"></div>
+      <div class="scan-container"></div>
+      <div class="orb-core">
+        <div class="sig-val" id="sigVal">?</div>
+        <div class="sig-sublbl" id="sigLbl">SIGNAL</div>
+      </div>
+    </div>
+    <div class="sig-stats">
+      <div class="stat">
+        <div class="stat-num" id="statHits">0</div>
+        <div class="stat-lbl">СИГНАЛОВ</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat">
+        <div class="stat-num">70%</div>
+        <div class="stat-lbl">ТОЧНОСТЬ</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat">
+        <div class="stat-num" id="statBest">—</div>
+        <div class="stat-lbl">ЛУЧШИЙ</div>
+      </div>
+    </div>
+    <button class="sig-btn" id="sigBtn" onclick="getSignal()">🎯 СИГНАЛ</button>
+    <div class="cd-wrap">
+      <div class="cd-track" id="cdTrack"><div class="cd-prog" id="cdProg"></div></div>
+      <div class="cd-txt" id="cdTxt"></div>
+    </div>
+  </div>
+  <div class="tagline">KING SIGNAL v6.0</div>
+</div>
+
+<!-- ── BANNED ── -->
+<div class="screen" id="s-banned">
+  <div class="status-screen">
+    <span class="status-ico">🚫</span>
+    <div class="status-title status-title-red">ЗАБЛОКИРОВАН</div>
+    <div class="status-msg" id="bannedMsg">Ваш ключ заблокирован.</div>
+    <button class="btn-main" style="max-width:280px" onclick="goToKeyScreen()">НАЗАД К ВХОДУ</button>
+  </div>
+</div>
+
+<!-- ── EXPIRED ── -->
+<div class="screen" id="s-expired">
+  <div class="status-screen">
+    <span class="status-ico">⏳</span>
+    <div class="status-title status-title-gold">ИСТЁК</div>
+    <div class="status-msg">Срок действия вашего ключа истёк. Обратитесь в поддержку.</div>
+    <button class="btn-main" style="max-width:280px" onclick="goToKeyScreen()">НАЗАД К ВХОДУ</button>
+  </div>
+</div>
+
+<!-- ── FROZEN ── -->
+<div class="screen" id="s-frozen">
+  <div class="status-screen">
+    <span class="status-ico">❄️</span>
+    <div class="status-title status-title-blue">ЗАМОРОЖЕН</div>
+    <div class="status-msg" id="frozenMsg">Ваш ключ временно заморожен.</div>
+    <button class="btn-main" style="max-width:280px" onclick="goToKeyScreen()">НАЗАД К ВХОДУ</button>
+  </div>
+</div>
+
+<!-- ── MAINTENANCE ── -->
+<div class="screen" id="s-maintenance">
+  <div class="status-screen">
+    <span class="status-ico">🔧</span>
+    <div class="status-title status-title-gold">ТЕХРАБОТЫ</div>
+    <div class="status-msg" id="maintenanceMsg">Сервис временно недоступен.</div>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://king-signal-server.onrender.com';
+let cooling = false;
+let sessionHits = 0;
+let sessionBest = 0;
+
+// ── UTILS ──────────────────────────────────────────────────────────────────────
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');});
+  const el = document.getElementById(id);
+  if(el) el.classList.add('active');
+}
+
+function getCachedKey(){
+  try{ const d=localStorage.getItem('king_key'); return d?JSON.parse(d):null; }catch(e){return null;}
+}
+function setCachedKey(obj){
+  try{ localStorage.setItem('king_key',JSON.stringify(obj)); }catch(e){}
+}
+function clearCachedKey(){
+  try{ localStorage.removeItem('king_key'); }catch(e){}
+}
+
+function formatExpiryMs(ms){
+  if(!ms||ms<=0) return 'EXPIRED';
+  const d=Math.floor(ms/86400000);
+  const h=Math.floor((ms%86400000)/3600000);
+  const m=Math.floor((ms%3600000)/60000);
+  if(d>0) return d+'д '+h+'ч';
+  if(h>0) return h+'ч '+m+'м';
+  return m+'м';
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+async function doLogin(){
+  const pid = document.getElementById('loginIdInp').value.trim().toUpperCase();
+  const key = document.getElementById('loginKeyInp').value.trim().toUpperCase();
+  if(!pid||!key){ showLoginError('✕ ВВЕДИ АЙДИ И КЛЮЧ'); return; }
+  await verifyKey(key, pid, false);
+}
+
+function showLoginError(msg){
+  const e=document.getElementById('loginErr');
+  e.textContent=msg;
+  shakeInp('loginKeyInp');
+  setTimeout(()=>{ e.textContent=''; },2000);
+}
+function shakeInp(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.add('err-shake');
+  setTimeout(()=>el.classList.remove('err-shake'),400);
+}
+
+function goToKeyScreen(){ clearCachedKey(); show('s-key'); }
+
+async function verifyKey(key, playerId, silent=false){
+  if(!silent){
+    const btn=document.querySelector('#s-key .btn-main');
+    if(btn){ btn.textContent='ПРОВЕРКА...'; btn.disabled=true; }
+  }
+  try{
+    const res=await fetch(`${API_URL}/check?key=${encodeURIComponent(key)}&player_id=${encodeURIComponent(playerId||'')}`);
+    const data=await res.json();
+    if(!silent){
+      const btn=document.querySelector('#s-key .btn-main');
+      if(btn){ btn.textContent='ВОЙТИ'; btn.disabled=false; }
+    }
+    if(data.status==='ok'){
+      setCachedKey({key:data.key, playerId:data.playerId||playerId});
+      document.getElementById('kiKeyDisp').textContent=data.key;
+      document.getElementById('kiExpDisp').textContent='ДО: '+formatExpiryMs(data.expiresIn);
+      show('s-platform');
+    }
+    else if(data.status==='maintenance'){ document.getElementById('maintenanceMsg').textContent=data.message; setCachedKey({key,playerId}); show('s-maintenance'); }
+    else if(data.status==='banned'){ clearCachedKey(); document.getElementById('bannedMsg').textContent=data.message||'Ваш ключ заблокирован.'; show('s-banned'); }
+    else if(data.status==='frozen'){ document.getElementById('frozenMsg').textContent=data.message||'Ваш ключ заморожен.'; show('s-frozen'); }
+    else if(data.status==='expired'){ clearCachedKey(); show('s-expired'); }
+    else{
+      if(!silent) showLoginError(data.message||'✕ НЕВЕРНЫЙ КЛЮЧ ИЛИ АЙДИ');
+      else show('s-key');
+    }
+  } catch(e){
+    if(!silent){
+      const btn=document.querySelector('#s-key .btn-main');
+      if(btn){ btn.textContent='ВОЙТИ'; btn.disabled=false; }
+      showLoginError('✕ НЕТ СОЕДИНЕНИЯ');
+    } else {
+      const c=getCachedKey();
+      if(c){ document.getElementById('kiKeyDisp').textContent=c.key; document.getElementById('kiExpDisp').textContent='ОФЛАЙН'; show('s-platform'); }
+      else show('s-key');
+    }
+  }
+}
+
+// ── PLATFORM / GAMES ─────────────────────────────────────────────────────────
+function selectPlatform(p){
+  const badge=document.getElementById('platformBadge');
+  const grid=document.getElementById('gamesGrid');
+
+  if(p==='1xbet'){
+    badge.textContent='1XBET'; badge.style.color='#38bdf8';
+    grid.innerHTML=`
+      <div class="game-tile" onclick="pickGame('lucky_jet_1x')">
+        <span class="gt-badge">LIVE</span>
+        <span class="gt-ico">🚀</span>
+        <div class="gt-name">LUCKY JET</div>
+        <div class="gt-desc">x1.01 — x200</div>
+      </div>
+      <div class="game-tile" onclick="pickGame('aviator')">
+        <span class="gt-badge">LIVE</span>
+        <span class="gt-ico">✈️</span>
+        <div class="gt-name">AVIATOR</div>
+        <div class="gt-desc">x1.0 — x150</div>
+      </div>
+      <div class="game-tile game-tile-full" onclick="pickGame('jet_x')">
+        <span class="gt-badge">LIVE</span>
+        <span class="gt-ico">🛸</span>
+        <div class="gt-name">JET X</div>
+        <div class="gt-desc">x1.0 — x100</div>
+      </div>
+    `;
+  } else {
+    badge.textContent='1WIN'; badge.style.color='#f59e0b';
+    grid.innerHTML=`
+      <div class="game-tile" onclick="pickGame('lucky')">
+        <span class="gt-badge">LIVE</span>
+        <span class="gt-ico">🚀</span>
+        <div class="gt-name">LUCKY JET</div>
+        <div class="gt-desc">x1.01 — x200</div>
+      </div>
+      <div class="game-tile" onclick="pickGame('rocket')">
+        <span class="gt-badge">LIVE</span>
+        <span class="gt-ico">🛸</span>
+        <div class="gt-name">ROCKET</div>
+        <div class="gt-desc">x1.0 — x50</div>
+      </div>
+    `;
+  }
+  show('s-games');
+}
+
+let currentGame = null;
+
+function pickGame(game){
+  const c=getCachedKey(); if(!c){ show('s-key'); return; }
+  currentGame=game;
+  const labels={
+    lucky:'LUCKY JET 🚀',
+    lucky_jet_1x:'LUCKY JET 🚀',
+    aviator:'AVIATOR ✈️',
+    jet_x:'JET X 🛸',
+    rocket:'ROCKET 🛸'
+  };
+  document.getElementById('signalGameLbl').textContent=labels[game]||game.toUpperCase();
+  document.getElementById('warnOverlay').classList.add('open');
+}
+
+function confirmWarning(){
+  document.getElementById('warnOverlay').classList.remove('open');
+  // Reset signal display
+  const sv=document.getElementById('sigVal'), sl=document.getElementById('sigLbl');
+  sv.classList.remove('show','big','mega'); sv.textContent='?'; sl.classList.remove('show');
+  document.getElementById('sigBtn').disabled=false;
+  document.getElementById('cdTrack').classList.remove('on');
+  document.getElementById('cdProg').style.width='0%';
+  document.getElementById('cdTxt').textContent='';
+  cooling=false;
+  show('s-signal');
+}
+
+// ── SIGNAL LOGIC ─────────────────────────────────────────────────────────────
+function randomMult(){
+  const r=Math.random();
+  if(r<0.55) return (1.2+Math.random()*0.4).toFixed(2)+'x';
+  if(r<0.78) return (1.6+Math.random()*1.6).toFixed(2)+'x';
+  if(r<0.92) return (3.2+Math.random()*7.0).toFixed(2)+'x';
+  if(r<0.98) return (10+Math.random()*12).toFixed(2)+'x';
+  return (22+Math.random()*78).toFixed(2)+'x';
+}
+
+function getSignal(){
+  if(cooling) return;
+  const c=getCachedKey(); if(!c){ show('s-key'); return; }
+  const value=randomMult();
+  sessionHits++;
+  const numVal=parseFloat(value);
+  if(numVal>sessionBest){
+    sessionBest=numVal;
+    document.getElementById('statBest').textContent=value;
+  }
+  document.getElementById('statHits').textContent=sessionHits;
+
+  const sv=document.getElementById('sigVal'), sl=document.getElementById('sigLbl');
+  sv.classList.remove('show','big','mega'); sl.classList.remove('show');
+  setTimeout(()=>{
+    sv.textContent=value;
+    if(numVal>=20) sv.classList.add('show','mega');
+    else if(numVal>=5) sv.classList.add('show','big');
+    else sv.classList.add('show');
+    sl.classList.add('show');
+  },90);
+
+  startCooldown();
+}
+
+const COOLDOWN=5000;
+function startCooldown(){
+  cooling=true;
+  document.getElementById('sigBtn').disabled=true;
+  const track=document.getElementById('cdTrack');
+  const prog=document.getElementById('cdProg');
+  const txt=document.getElementById('cdTxt');
+  track.classList.add('on');
+  prog.style.transition='none'; prog.style.width='0%';
+  requestAnimationFrame(()=>{
+    prog.style.transition=`width ${COOLDOWN}ms linear`;
+    prog.style.width='100%';
+  });
+  let rem=Math.ceil(COOLDOWN/1000);
+  txt.textContent='⏳ '+rem+'с';
+  const iv=setInterval(()=>{
+    rem--;
+    if(rem>0){ txt.textContent='⏳ '+rem+'с'; }
+    else{
+      clearInterval(iv);
+      cooling=false;
+      document.getElementById('sigBtn').disabled=false;
+      track.classList.remove('on');
+      prog.style.transition='none'; prog.style.width='0%';
+      txt.textContent='✓ ГОТОВ';
+      setTimeout(()=>{ txt.textContent=''; },1500);
+    }
+  },1000);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async function(){
+  const c=getCachedKey();
+  if(c&&c.key&&c.playerId){
+    document.getElementById('loginIdInp').value=c.playerId;
+    document.getElementById('loginKeyInp').value=c.key;
+    await verifyKey(c.key, c.playerId, true);
+  } else {
+    show('s-key');
+  }
+
+  // Periodic key validity check
+  setInterval(async()=>{
+    const c=getCachedKey(); if(!c) return;
+    const active=document.querySelector('.screen.active'); if(!active) return;
+    if(['s-platform','s-games','s-signal'].includes(active.id)){
+      try{
+        const res=await fetch(`${API_URL}/check?key=${encodeURIComponent(c.key)}&player_id=${encodeURIComponent(c.playerId||'')}`);
+        const data=await res.json();
+        if(data.status==='banned'){ clearCachedKey(); document.getElementById('bannedMsg').textContent=data.message||'Ваш ключ заблокирован.'; show('s-banned'); }
+        else if(data.status==='frozen'){ document.getElementById('frozenMsg').textContent=data.message||'Ваш ключ заморожен.'; show('s-frozen'); }
+        else if(data.status==='maintenance'){ document.getElementById('maintenanceMsg').textContent=data.message; show('s-maintenance'); }
+        else if(data.status==='expired'){ clearCachedKey(); show('s-expired'); }
+      }catch(e){}
+    }
+  }, 25000);
+});
+</script>
+</body>
+</html>
