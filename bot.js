@@ -4,7 +4,7 @@ const BOT_TOKEN = process.env.BOT_TOKEN || '8639490181:AAHlTgtVDsRuohlt0ZgcGV2h0
 const ADMIN_IDS = (process.env.ADMIN_IDS || '6697505756').split(',').map(s => s.trim());
 const API_URL   = process.env.API_URL || 'https://king-signal-server.onrender.com';
 
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+const bot = new TelegramBot(BOT_TOKEN, { polling: false });
 const states = {};
 
 function isAdmin(chatId) {
