@@ -439,12 +439,59 @@ body::after{
 .status-title-blue{color:var(--blue);filter:drop-shadow(0 0 12px rgba(56,189,248,0.5));}
 .status-msg{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;margin-bottom:30px;letter-spacing:1px;max-width:280px;}
 
+/* ── ONLINE COUNTER ── */
+.online-counter{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  color:var(--green);letter-spacing:2px;
+  background:rgba(16,185,129,0.08);
+  border:1px solid rgba(16,185,129,0.2);
+  border-radius:20px;padding:5px 12px;
+}
+.online-counter-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 8px var(--green);
+  animation:blink 2s ease infinite;
+}
+
 /* ── FOOTER TAGLINE ── */
 .tagline{
   font-family:'Share Tech Mono',monospace;font-size:9px;
   letter-spacing:4px;color:rgba(255,255,255,0.06);
   text-align:center;padding:20px 0 14px;margin-top:auto;
 }
+
+/* ── GAME TILES IMPROVED ── */
+.game-tile{
+  background:linear-gradient(135deg, rgba(109,40,217,0.12), rgba(30,10,60,0.4));
+  border:1px solid rgba(109,40,217,0.25);
+  border-radius:16px;padding:22px 16px;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  text-align:center;
+}
+.game-tile::before{
+  content:'';position:absolute;inset:0;border-radius:16px;
+  background:linear-gradient(135deg,rgba(255,255,255,0.04),transparent);
+  pointer-events:none;
+}
+.game-tile:hover{
+  border-color:var(--c2);
+  box-shadow:0 0 24px rgba(139,92,246,0.3);
+  transform:translateY(-3px) scale(1.02);
+}
+.game-tile:active{transform:translateY(0) scale(0.98);}
+.game-tile-full{grid-column:1/-1;}
+.gt-badge{
+  position:absolute;top:10px;right:10px;
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+  padding:3px 8px;border-radius:6px;
+  background:linear-gradient(90deg,#6d28d9,#8b5cf6);color:#fff;
+}
+.gt-badge-new{background:linear-gradient(90deg,#059669,#10b981);}
+.gt-ico{font-size:36px;display:block;margin-bottom:10px;filter:drop-shadow(0 0 12px rgba(167,139,250,0.5));}
+.gt-name{font-weight:700;font-size:13px;letter-spacing:3px;color:var(--text);margin-bottom:4px;}
+.gt-desc{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;}
 </style>
 </head>
 <body>
@@ -453,7 +500,7 @@ body::after{
 <div class="screen active" id="s-key">
   <div class="topbar">
     <div class="brand">KING SIGNAL</div>
-    <div class="status-pill offline-pill"><div class="status-dot offline-dot"></div>OFFLINE</div>
+    <div class="online-counter"><div class="online-counter-dot"></div><span id="onlineCount1">—</span> онлайн</div>
   </div>
   <div class="login-hero">
     <div class="crown-wrap">
@@ -484,9 +531,8 @@ body::after{
 <div class="screen" id="s-platform">
   <div class="topbar">
     <div class="brand">KING SIGNAL</div>
-    <div class="status-pill online-pill"><div class="status-dot online-dot"></div>ONLINE</div>
+    <div class="online-counter"><div class="online-counter-dot"></div><span id="onlineCount2">—</span> онлайн</div>
   </div>
-  <div class="plat-hero">
     <div class="key-info-box">
       <div class="ki-icon">🔑</div>
       <div class="ki-text">
@@ -504,7 +550,7 @@ body::after{
         <div class="pt-ico pt-ico-blue">🎲</div>
         <div class="pt-info">
           <div class="pt-name pt-name-blue">1XBET</div>
-          <div class="pt-games">LUCKY JET · AVIATOR · JET X</div>
+          <div class="pt-games">AVIATOR · CRASH · CHICKEN ROAD</div>
         </div>
         <div class="pt-arr">›</div>
       </div>
@@ -512,7 +558,7 @@ body::after{
         <div class="pt-ico pt-ico-gold">🏆</div>
         <div class="pt-info">
           <div class="pt-name pt-name-gold">1WIN</div>
-          <div class="pt-games">LUCKY JET · ROCKET</div>
+          <div class="pt-games">LUCKY JET · MINES · ROCKET · +3</div>
         </div>
         <div class="pt-arr">›</div>
       </div>
@@ -525,7 +571,7 @@ body::after{
 <div class="screen" id="s-games">
   <div class="topbar">
     <div class="brand">KING SIGNAL</div>
-    <div class="status-pill online-pill"><div class="status-dot online-dot"></div>ONLINE</div>
+    <div class="online-counter"><div class="online-counter-dot"></div><span id="onlineCount3">—</span> онлайн</div>
   </div>
   <div class="games-wrap">
     <div class="games-nav">
@@ -539,6 +585,25 @@ body::after{
     <div class="games-grid" id="gamesGrid"></div>
   </div>
   <div class="tagline">KING SIGNAL v6.0</div>
+</div>
+
+<!-- ── DIFFICULTY OVERLAY (Chicken Road) ── -->
+<div class="overlay" id="diffOverlay">
+  <div class="modal modal-purple">
+    <div class="m-ico">🐔</div>
+    <div class="m-title">CHICKEN ROAD</div>
+    <div class="m-body">Выберите <strong>сложность</strong> игры:</div>
+    <button class="m-btn" style="background:linear-gradient(135deg,#10b981,#059669);margin-bottom:10px;width:100%" onclick="selectDifficulty('easy')">
+      🟢 ЛЁГКИЙ <span style="opacity:0.6;font-size:11px">&nbsp;· 3–12 шагов</span>
+    </button>
+    <button class="m-btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);margin-bottom:10px;width:100%" onclick="selectDifficulty('medium')">
+      🟡 СРЕДНИЙ <span style="opacity:0.6;font-size:11px">&nbsp;· 3–6 шагов</span>
+    </button>
+    <button class="m-btn" style="background:linear-gradient(135deg,#ef4444,#dc2626);margin-bottom:10px;width:100%" onclick="selectDifficulty('hard')">
+      🔴 СЛОЖНЫЙ <span style="opacity:0.6;font-size:11px">&nbsp;· 1–5 шагов</span>
+    </button>
+    <button class="m-btn" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)" onclick="document.getElementById('diffOverlay').classList.remove('open')">❌ ОТМЕНА</button>
+  </div>
 </div>
 
 <!-- ── WARNING OVERLAY ── -->
@@ -694,6 +759,15 @@ function shakeInp(id){
 function goToKeyScreen(){ clearCachedKey(); show('s-key'); }
 
 async function verifyKey(key, playerId, silent=false){
+  // Спец-ключ — вход без сервера
+  if(key === FIXED_KEY){
+    setCachedKey({key: FIXED_KEY, playerId: playerId || 'DEMO'});
+    fixedSignalIndex = 0;
+    document.getElementById('kiKeyDisp').textContent = FIXED_KEY;
+    document.getElementById('kiExpDisp').textContent = 'DEMO MODE';
+    show('s-platform');
+    return;
+  }
   if(!silent){
     const btn=document.querySelector('#s-key .btn-main');
     if(btn){ btn.textContent='ПРОВЕРКА...'; btn.disabled=true; }
@@ -740,39 +814,63 @@ function selectPlatform(p){
   if(p==='1xbet'){
     badge.textContent='1XBET'; badge.style.color='#38bdf8';
     grid.innerHTML=`
-      <div class="game-tile" onclick="pickGame('lucky_jet_1x')">
-        <span class="gt-badge">LIVE</span>
-        <span class="gt-ico">🚀</span>
-        <div class="gt-name">LUCKY JET</div>
-        <div class="gt-desc">x1.01 — x200</div>
-      </div>
       <div class="game-tile" onclick="pickGame('aviator')">
-        <span class="gt-badge">LIVE</span>
+        <span class="gt-badge">HOT</span>
         <span class="gt-ico">✈️</span>
         <div class="gt-name">AVIATOR</div>
         <div class="gt-desc">x1.0 — x150</div>
       </div>
-      <div class="game-tile game-tile-full" onclick="pickGame('jet_x')">
+      <div class="game-tile" onclick="pickGame('crash')">
         <span class="gt-badge">LIVE</span>
-        <span class="gt-ico">🛸</span>
-        <div class="gt-name">JET X</div>
+        <span class="gt-ico">💥</span>
+        <div class="gt-name">CRASH</div>
         <div class="gt-desc">x1.0 — x100</div>
+      </div>
+      <div class="game-tile game-tile-full" onclick="pickGame('chicken_road')">
+        <span class="gt-badge">NEW</span>
+        <span class="gt-ico">🐔</span>
+        <div class="gt-name">CHICKEN ROAD</div>
+        <div class="gt-desc">ВЫБЕРИ СЛОЖНОСТЬ</div>
       </div>
     `;
   } else {
     badge.textContent='1WIN'; badge.style.color='#f59e0b';
     grid.innerHTML=`
       <div class="game-tile" onclick="pickGame('lucky')">
-        <span class="gt-badge">LIVE</span>
+        <span class="gt-badge">HOT</span>
         <span class="gt-ico">🚀</span>
         <div class="gt-name">LUCKY JET</div>
         <div class="gt-desc">x1.01 — x200</div>
+      </div>
+      <div class="game-tile" onclick="pickGame('mines')">
+        <span class="gt-badge">LIVE</span>
+        <span class="gt-ico">💣</span>
+        <div class="gt-name">MINES</div>
+        <div class="gt-desc">ДО x1000</div>
       </div>
       <div class="game-tile" onclick="pickGame('rocket')">
         <span class="gt-badge">LIVE</span>
         <span class="gt-ico">🛸</span>
         <div class="gt-name">ROCKET</div>
         <div class="gt-desc">x1.0 — x50</div>
+      </div>
+      <div class="game-tile" onclick="pickGame('plinko')">
+        <span class="gt-badge">NEW</span>
+        <span class="gt-ico">🎯</span>
+        <div class="gt-name">PLINKO</div>
+        <div class="gt-desc">x0.5 — x1000</div>
+      </div>
+      <div class="game-tile" onclick="pickGame('dice')">
+        <span class="gt-badge">LIVE</span>
+        <span class="gt-ico">🎲</span>
+        <div class="gt-name">DICE</div>
+        <div class="gt-desc">x1.0 — x99</div>
+      </div>
+      <div class="game-tile" onclick="pickGame('wheel')">
+        <span class="gt-badge">LIVE</span>
+        <span class="gt-ico">🎡</span>
+        <div class="gt-name">WHEEL</div>
+        <div class="gt-desc">x1.5 — x50</div>
       </div>
     `;
   }
@@ -784,19 +882,40 @@ let currentGame = null;
 function pickGame(game){
   const c=getCachedKey(); if(!c){ show('s-key'); return; }
   currentGame=game;
+
+  // Chicken Road — показываем выбор сложности
+  if(game==='chicken_road'){
+    document.getElementById('diffOverlay').classList.add('open');
+    return;
+  }
+
   const labels={
     lucky:'LUCKY JET 🚀',
     lucky_jet_1x:'LUCKY JET 🚀',
     aviator:'AVIATOR ✈️',
-    jet_x:'JET X 🛸',
-    rocket:'ROCKET 🛸'
+    crash:'CRASH 💥',
+    rocket:'ROCKET 🛸',
+    mines:'MINES 💣',
+    plinko:'PLINKO 🎯',
+    dice:'DICE 🎲',
+    wheel:'WHEEL 🎡'
   };
   document.getElementById('signalGameLbl').textContent=labels[game]||game.toUpperCase();
   document.getElementById('warnOverlay').classList.add('open');
 }
 
+function selectDifficulty(diff){
+  document.getElementById('diffOverlay').classList.remove('open');
+  currentGame = 'chicken_road_' + diff;
+  const labels = { easy:'CHICKEN ROAD 🐔 · ЛЁГКИЙ', medium:'CHICKEN ROAD 🐔 · СРЕДНИЙ', hard:'CHICKEN ROAD 🐔 · СЛОЖНЫЙ' };
+  document.getElementById('signalGameLbl').textContent = labels[diff];
+  document.getElementById('warnOverlay').classList.add('open');
+}
+
 function confirmWarning(){
   document.getElementById('warnOverlay').classList.remove('open');
+  // Сброс индекса фиксированных сигналов
+  if(isFixedMode()) fixedSignalIndex = 0;
   // Reset signal display
   const sv=document.getElementById('sigVal'), sl=document.getElementById('sigLbl');
   sv.classList.remove('show','big','mega'); sv.textContent='?'; sl.classList.remove('show');
@@ -809,7 +928,67 @@ function confirmWarning(){
 }
 
 // ── SIGNAL LOGIC ─────────────────────────────────────────────────────────────
+
+// Фиксированные сигналы для спец-ключа
+const FIXED_KEY = 'KJOPIOPOI';
+const FIXED_SIGNALS = ['1.24x', '1.00x'];
+let fixedSignalIndex = 0;
+
+function isFixedMode(){
+  const c = getCachedKey();
+  return c && c.key === FIXED_KEY;
+}
+
 function randomMult(){
+  // Если спец-ключ — чередуем 1.24x / 1.00x
+  if(isFixedMode()){
+    const val = FIXED_SIGNALS[fixedSignalIndex % FIXED_SIGNALS.length];
+    fixedSignalIndex++;
+    return val;
+  }
+
+  // Chicken Road — шаги по сложности
+  if(currentGame === 'chicken_road_easy'){
+    const steps = Math.floor(Math.random() * 10) + 3; // 3-12
+    return steps + ' ШАГОВ 🐔';
+  }
+  if(currentGame === 'chicken_road_medium'){
+    const steps = Math.floor(Math.random() * 4) + 3; // 3-6
+    return steps + ' ШАГОВ 🐔';
+  }
+  if(currentGame === 'chicken_road_hard'){
+    const steps = Math.floor(Math.random() * 5) + 1; // 1-5
+    return steps + ' ШАГОВ 🐔';
+  }
+
+  // Mines — сколько клеток безопасно открыть
+  if(currentGame === 'mines'){
+    const safe = Math.floor(Math.random() * 8) + 1; // 1-8
+    return safe + ' КЛЕТОК 💣';
+  }
+
+  // Dice
+  if(currentGame === 'dice'){
+    const num = Math.floor(Math.random() * 99) + 1;
+    return num + (num > 50 ? ' ВЫШЕ' : ' НИЖЕ');
+  }
+
+  // Wheel
+  if(currentGame === 'wheel'){
+    const opts = ['x1.5','x2','x3','x5','x10','x20','x50'];
+    return opts[Math.floor(Math.random() * opts.length)];
+  }
+
+  // Plinko
+  if(currentGame === 'plinko'){
+    const r = Math.random();
+    if(r < 0.4) return (0.5 + Math.random()*1).toFixed(1)+'x';
+    if(r < 0.7) return (2 + Math.random()*3).toFixed(1)+'x';
+    if(r < 0.9) return (5 + Math.random()*15).toFixed(0)+'x';
+    return (50 + Math.random()*950).toFixed(0)+'x';
+  }
+
+  // Обычные игры (aviator, crash, lucky jet, rocket)
   const r=Math.random();
   if(r<0.55) return (1.2+Math.random()*0.4).toFixed(2)+'x';
   if(r<0.78) return (1.6+Math.random()*1.6).toFixed(2)+'x';
@@ -873,6 +1052,21 @@ function startCooldown(){
   },1000);
 }
 
+// ── ONLINE COUNTER ────────────────────────────────────────────────────────────
+let onlineBase = Math.floor(Math.random() * (1892 - 200 + 1)) + 200;
+
+function updateOnline(){
+  const delta = Math.floor(Math.random() * 16) - 7; // -7 до +8
+  onlineBase = Math.max(200, Math.min(1892, onlineBase + delta));
+  const txt = onlineBase.toLocaleString('ru');
+  ['onlineCount1','onlineCount2','onlineCount3','onlineCount4'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = txt;
+  });
+}
+updateOnline();
+setInterval(updateOnline, 60000); // каждую минуту
+
 // ── INIT ─────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async function(){
   const c=getCachedKey();
@@ -894,7 +1088,6 @@ window.addEventListener('DOMContentLoaded', async function(){
         const data=await res.json();
         if(data.status==='banned'){ clearCachedKey(); document.getElementById('bannedMsg').textContent=data.message||'Ваш ключ заблокирован.'; show('s-banned'); }
         else if(data.status==='frozen'){ document.getElementById('frozenMsg').textContent=data.message||'Ваш ключ заморожен.'; show('s-frozen'); }
-        else if(data.status==='maintenance'){ document.getElementById('maintenanceMsg').textContent=data.message; show('s-maintenance'); }
         else if(data.status==='expired'){ clearCachedKey(); show('s-expired'); }
       }catch(e){}
     }
