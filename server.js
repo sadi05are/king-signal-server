@@ -419,4 +419,10 @@ app.listen(PORT, () => {
     const url = `https://king-signal-server.onrender.com/webhook/${BOT_TOKEN}`;
     https.get(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook?url=${encodeURIComponent(url)}`, () => {});
   }, 3000);
+
+  // ─── KEEP-ALIVE: пингуем себя каждые 10 минут чтобы не засыпать
+  setInterval(() => {
+    https.get('https://king-signal-server.onrender.com/', () => {}).on('error', () => {});
+  }, 10 * 60 * 1000);
 });
+    
