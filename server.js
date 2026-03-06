@@ -2,6 +2,7 @@ const express = require('express');
 const cors    = require('cors');
 const fs      = require('fs');
 const https   = require('https');
+const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
 app.use(cors());
@@ -27,15 +28,7 @@ function saveState(d) { fs.writeFileSync(STATE_FILE, JSON.stringify(d, null, 2))
 
 // ─── TELEGRAM HELPER ──────────────────────────────────────────────────────────
 function tg(chatId, text, extra = {}) {
-  const body = JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', ...extra });
-  const req = https.request({
-    hostname: 'api.telegram.org',
-    path: `/bot${BOT_TOKEN}/sendMessage`,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
-  });
-  req.on('error', () => {});
-  req.write(body); req.end();
+  bot.sendMessage(chatId, text, { parse_mode: 'HTML', ...extra }).catch(() => {});
 }
 
 // ─── SHARED ONLINE COUNTER ────────────────────────────────────────────────────
@@ -45,42 +38,32 @@ setInterval(() => {
   onlineValue = Math.max(200, Math.min(1892, onlineValue + delta));
 }, 60000);
 
-// ─── /online ──────────────────────────────────────────────────────────────────
-app.get('/online', (req, res) => {
-  res.json({ online: onlineValue });
-});
+// ─── API ROUTES ───────────────────────────────────────────────────────────────
+app.get('/online', (req, res) => res.json({ online: onlineValue }));
 
-// ─── /status ──────────────────────────────────────────────────────────────────
 app.get('/status', (req, res) => {
   const s = loadState();
   res.json({ maintenance: s.maintenance, maintenanceMsg: s.maintenanceMsg, online: onlineValue });
 });
 
-// ─── /check ───────────────────────────────────────────────────────────────────
 app.get('/check', (req, res) => {
   const state = loadState();
-  if (state.maintenance) {
-    return res.json({ status: 'maintenance', message: state.maintenanceMsg });
-  }
+  if (state.maintenance) return res.json({ status: 'maintenance', message: state.maintenanceMsg });
   const { key, player_id } = req.query;
   if (!key || !player_id) return res.json({ status: 'error', message: '✕ Введи Айди и Ключ' });
-
   const players = loadPlayers();
   const id = player_id.trim().toUpperCase();
   const k  = key.trim().toUpperCase();
   const p  = players[id];
-
   if (!p) return res.json({ status: 'error', message: '✕ Айди не найден' });
   if (p.key !== k) return res.json({ status: 'error', message: '✕ Неверный ключ' });
   if (p.status === 'banned')  return res.json({ status: 'banned',  message: p.ban_reason || 'Аккаунт заблокирован.' });
   if (p.status === 'frozen')  return res.json({ status: 'frozen',  message: 'Аккаунт временно заморожен.' });
   if (p.expires && new Date(p.expires) < new Date()) return res.json({ status: 'expired' });
-
   const expiresIn = p.expires ? new Date(p.expires).getTime() - Date.now() : null;
   res.json({ status: 'ok', key: p.key, playerId: id, expiresIn });
 });
 
-// ─── /addplayer ───────────────────────────────────────────────────────────────
 app.post('/addplayer', (req, res) => {
   const { playerId, key, days } = req.body;
   if (!playerId || !key) return res.json({ ok: false, message: 'Нужен playerId и key' });
@@ -94,7 +77,6 @@ app.post('/addplayer', (req, res) => {
   res.json({ ok: true, playerId: id, key: k });
 });
 
-// ─── /ban /unban ──────────────────────────────────────────────────────────────
 app.post('/ban', (req, res) => {
   const players = loadPlayers();
   const id = (req.body.playerId || '').toUpperCase();
@@ -104,6 +86,7 @@ app.post('/ban', (req, res) => {
   savePlayers(players);
   res.json({ ok: true });
 });
+
 app.post('/unban', (req, res) => {
   const players = loadPlayers();
   const id = (req.body.playerId || '').toUpperCase();
@@ -114,7 +97,6 @@ app.post('/unban', (req, res) => {
   res.json({ ok: true });
 });
 
-// ─── /freeze /unfreeze ────────────────────────────────────────────────────────
 app.post('/freeze', (req, res) => {
   const players = loadPlayers();
   const id = (req.body.playerId || '').toUpperCase();
@@ -123,6 +105,7 @@ app.post('/freeze', (req, res) => {
   savePlayers(players);
   res.json({ ok: true });
 });
+
 app.post('/unfreeze', (req, res) => {
   const players = loadPlayers();
   const id = (req.body.playerId || '').toUpperCase();
@@ -132,7 +115,6 @@ app.post('/unfreeze', (req, res) => {
   res.json({ ok: true });
 });
 
-// ─── /maintenance ─────────────────────────────────────────────────────────────
 app.post('/maintenance', (req, res) => {
   const state = loadState();
   state.maintenance = !!req.body.enabled;
@@ -141,7 +123,6 @@ app.post('/maintenance', (req, res) => {
   res.json({ ok: true, maintenance: state.maintenance });
 });
 
-// ─── /players ─────────────────────────────────────────────────────────────────
 app.get('/players', (req, res) => {
   const players = loadPlayers();
   const list = Object.entries(players).map(([id, p]) => ({
@@ -153,22 +134,14 @@ app.get('/players', (req, res) => {
   res.json({ count: list.length, players: list });
 });
 
-// ─── WEBHOOK ──────────────────────────────────────────────────────────────────
-const pendingAdd = {}; // FSM for /addplayer
+app.get('/', (req, res) => res.json({ ok: true, service: 'KING SIGNAL', online: onlineValue }));
 
-app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
-  const upd = req.body;
-  const msg = upd.message;
-  const cb  = upd.callback_query;
+// ─── POLLING BOT ──────────────────────────────────────────────────────────────
+const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+const pendingAdd = {};
 
-  if (cb) {
-    if (String(cb.from.id) !== String(ADMIN_ID)) return res.json({});
-    handleCb(cb);
-    return res.json({});
-  }
-  if (!msg) return res.json({});
-  if (String(msg.chat.id) !== String(ADMIN_ID)) return res.json({});
-
+bot.on('message', (msg) => {
+  if (String(msg.chat.id) !== String(ADMIN_ID)) return;
   const text  = (msg.text || '').trim();
   const parts = text.split(' ');
   const cmd   = parts[0].toLowerCase();
@@ -179,7 +152,7 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
   if (fsm) {
     if (text === '/cancel') {
       delete pendingAdd[uid];
-      return tg(uid, '❌ Отменено.') && res.json({});
+      return tg(uid, '❌ Отменено.');
     }
     if (fsm.step === 'id') {
       pendingAdd[uid].playerId = text.toUpperCase();
@@ -196,7 +169,7 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
       const players = loadPlayers();
       const id = playerId.toUpperCase();
       const k  = key.toUpperCase();
-      if (players[id]) return tg(uid, `❌ Айди <code>${id}</code> уже существует!`) && res.json({});
+      if (players[id]) return tg(uid, `❌ Айди <code>${id}</code> уже существует!`);
       const expires = days > 0 ? new Date(Date.now() + days * 86400000).toISOString() : null;
       players[id] = { key: k, status: 'ok', expires, created: new Date().toISOString() };
       savePlayers(players);
@@ -204,25 +177,25 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
         `✅ <b>Игрок добавлен!</b>\n\n` +
         `🆔 Айди: <code>${id}</code>\n` +
         `🔑 Ключ: <code>${k}</code>\n` +
-        `📅 Срок: ${days > 0 ? days + ' дней' : 'Бессрочный'}`
+        `📅 Срок: <b>${days > 0 ? days + ' дней' : 'Бессрочный'}</b>\n\n` +
+        `📨 Отправь игроку:\n———————————————\n` +
+        `🆔 <code>${id}</code>\n🔑 <code>${k}</code>\n———————————————`
       );
     }
-    return res.json({});
+    return;
   }
 
-  // ── COMMANDS
-  if (cmd === '/start' || cmd === '/help') {
+  if (cmd === '/start') {
     tg(uid,
-      `👑 <b>KING SIGNAL — Панель управления</b>\n\n` +
-      `📋 <b>Команды:</b>\n` +
+      `👑 <b>KING SIGNAL — ADMIN</b>\n\n` +
       `/addplayer — добавить игрока\n` +
-      `/ban ID [причина] — заблокировать\n` +
+      `/players — список игроков\n` +
+      `/info ID — инфо об игроке\n` +
+      `/ban ID — заблокировать\n` +
       `/unban ID — разблокировать\n` +
       `/freeze ID — заморозить\n` +
       `/unfreeze ID — разморозить\n` +
       `/maintenance — вкл/выкл тех. работы\n` +
-      `/info ID — инфо об игроке\n` +
-      `/players — список всех\n` +
       `/stats — статистика`,
       { reply_markup: JSON.stringify({ inline_keyboard: [
         [{ text: '👥 Игроки', callback_data: 'list_players' }, { text: '📊 Статистика', callback_data: 'stats' }],
@@ -238,7 +211,7 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
     const id = parts[1].toUpperCase();
     const reason = parts.slice(2).join(' ') || 'Нарушение правил';
     const players = loadPlayers();
-    if (!players[id]) return tg(uid, `❌ <code>${id}</code> не найден`) && res.json({});
+    if (!players[id]) return tg(uid, `❌ <code>${id}</code> не найден`);
     players[id].status = 'banned';
     players[id].ban_reason = reason;
     savePlayers(players);
@@ -247,7 +220,7 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
   else if (cmd === '/unban' && parts[1]) {
     const id = parts[1].toUpperCase();
     const players = loadPlayers();
-    if (!players[id]) return tg(uid, `❌ Не найден`) && res.json({});
+    if (!players[id]) return tg(uid, `❌ Не найден`);
     players[id].status = 'ok';
     delete players[id].ban_reason;
     savePlayers(players);
@@ -256,7 +229,7 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
   else if (cmd === '/freeze' && parts[1]) {
     const id = parts[1].toUpperCase();
     const players = loadPlayers();
-    if (!players[id]) return tg(uid, `❌ Не найден`) && res.json({});
+    if (!players[id]) return tg(uid, `❌ Не найден`);
     players[id].status = 'frozen';
     savePlayers(players);
     tg(uid, `❄️ <code>${id}</code> заморожен`);
@@ -264,7 +237,7 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
   else if (cmd === '/unfreeze' && parts[1]) {
     const id = parts[1].toUpperCase();
     const players = loadPlayers();
-    if (!players[id]) return tg(uid, `❌ Не найден`) && res.json({});
+    if (!players[id]) return tg(uid, `❌ Не найден`);
     players[id].status = 'ok';
     savePlayers(players);
     tg(uid, `✅ <code>${id}</code> разморожен`);
@@ -285,7 +258,7 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
     const id = parts[1].toUpperCase();
     const players = loadPlayers();
     const p = players[id];
-    if (!p) return tg(uid, `❌ Не найден`) && res.json({});
+    if (!p) return tg(uid, `❌ Не найден`);
     const icon = p.status === 'banned' ? '🔨' : p.status === 'frozen' ? '❄️' : '✅';
     const exp = p.expires ? new Date(p.expires).toLocaleString('ru') : '∞';
     tg(uid,
@@ -335,11 +308,10 @@ app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
       `👀 Онлайн: <b>${onlineValue}</b>`
     );
   }
-
-  res.json({});
 });
 
-function handleCb(cb) {
+bot.on('callback_query', (cb) => {
+  if (String(cb.from.id) !== String(ADMIN_ID)) return;
   const data = cb.data;
   const uid  = ADMIN_ID;
   const players = loadPlayers();
@@ -399,30 +371,16 @@ function handleCb(cb) {
     savePlayers(players);
     tg(uid, `✅ <code>${id}</code> разморожен`);
   }
-}
 
-// ─── SET WEBHOOK ──────────────────────────────────────────────────────────────
-app.get('/set-webhook', (req, res) => {
-  const url = `https://king-signal-server.onrender.com/webhook/${BOT_TOKEN}`;
-  https.get(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook?url=${encodeURIComponent(url)}`, r => {
-    let d = ''; r.on('data', c => d += c);
-    r.on('end', () => { try { res.json(JSON.parse(d)); } catch { res.json({ ok: false }); } });
-  });
+  bot.answerCallbackQuery(cb.id).catch(() => {});
 });
 
-app.get('/', (req, res) => res.json({ ok: true, service: 'KING SIGNAL', online: onlineValue }));
+bot.on('polling_error', (err) => console.error('Polling error:', err.message));
 
+// ─── START SERVER ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ KING SIGNAL Server на порту ${PORT}`);
-  setTimeout(() => {
-    const url = `https://king-signal-server.onrender.com/webhook/${BOT_TOKEN}`;
-    https.get(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook?url=${encodeURIComponent(url)}`, () => {});
-  }, 3000);
-
-  // ─── KEEP-ALIVE: пингуем себя каждые 10 минут чтобы не засыпать
-  setInterval(() => {
-    https.get('https://king-signal-server.onrender.com/', () => {}).on('error', () => {});
-  }, 10 * 60 * 1000);
+  console.log(`🤖 Бот запущен в режиме polling`);
 });
-    
+  
