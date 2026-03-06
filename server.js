@@ -383,4 +383,4 @@ app.listen(PORT, () => {
   console.log(`✅ KING SIGNAL Server на порту ${PORT}`);
   console.log(`🤖 Бот запущен в режиме polling`);
 });
-  
+    
