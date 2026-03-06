@@ -2,665 +2,848 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>KING SIGNAL</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#030308;
-  --card:#08080f;
-  --c1:#6d28d9;
-  --c2:#8b5cf6;
+  --bg:#02020a;
+  --card:#07070f;
+  --c1:#5b21b6;
+  --c2:#7c3aed;
   --c3:#a78bfa;
+  --c4:#c4b5fd;
   --gold:#f59e0b;
+  --gold2:#fbbf24;
   --red:#ef4444;
   --green:#10b981;
   --blue:#38bdf8;
+  --pink:#e879f9;
   --text:#ede9fe;
-  --muted:rgba(237,233,254,0.35);
-  --border:rgba(109,40,217,0.25);
-  --glow:rgba(139,92,246,0.6);
+  --muted:rgba(237,233,254,0.3);
+  --border:rgba(124,58,237,0.2);
+  --glow:rgba(124,58,237,0.5);
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow-x:hidden;}
 body{
-  background:var(--bg);
-  min-height:100vh;
-  font-family:'Orbitron',sans-serif;
-  color:var(--text);
-  overflow-x:hidden;
+  background:var(--bg);min-height:100vh;
+  font-family:'Orbitron',sans-serif;color:var(--text);
 }
 
-/* Animated background */
-body::before{
-  content:'';
-  position:fixed;inset:0;
+/* ─── ANIMATED BG ─── */
+.bg-fx{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.bg-fx::before{
+  content:'';position:absolute;inset:0;
   background:
-    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(109,40,217,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(167,139,250,0.1) 0%, transparent 55%);
-  pointer-events:none;z-index:0;
+    radial-gradient(ellipse 90% 60% at 15% -5%, rgba(91,33,182,0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 85% 105%, rgba(232,121,249,0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(124,58,237,0.06) 0%, transparent 60%);
 }
-body::after{
-  content:'';
-  position:fixed;inset:0;
+.bg-fx::after{
+  content:'';position:absolute;inset:0;
   background-image:
-    linear-gradient(rgba(109,40,217,0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(109,40,217,0.035) 1px, transparent 1px);
-  background-size:56px 56px;
-  pointer-events:none;z-index:0;
+    linear-gradient(rgba(124,58,237,0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,58,237,0.028) 1px, transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 100% 100% at 50% 50%, black 30%, transparent 100%);
 }
 
-/* ── SCREENS ── */
+/* Floating particles */
+.particle{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:0;
+  animation:particle-float linear infinite;
+}
+@keyframes particle-float{
+  0%{transform:translateY(100vh) translateX(0) scale(0);opacity:0;}
+  10%{opacity:1;}
+  90%{opacity:0.3;}
+  100%{transform:translateY(-10vh) translateX(var(--drift)) scale(1.5);opacity:0;}
+}
+
+/* ─── SCREENS ─── */
 .screen{
   display:none;min-height:100vh;width:100%;
-  position:relative;z-index:10;
-  flex-direction:column;
-  animation:fadeUp 0.35s cubic-bezier(0.22,1,0.36,1) both;
+  position:relative;z-index:10;flex-direction:column;
+  animation:fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) both;
 }
 .screen.active{display:flex;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 
-/* ── TOPBAR ── */
+/* ─── TOPBAR ─── */
 .topbar{
   display:flex;align-items:center;justify-content:space-between;
-  padding:20px 24px 0;
+  padding:18px 20px 0;
 }
 .brand{
-  font-weight:900;font-size:20px;letter-spacing:4px;
-  background:linear-gradient(90deg,#a78bfa,#c4b5fd,#e879f9);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 0 14px rgba(167,139,250,0.55));
-}
-.status-pill{
-  display:flex;align-items:center;gap:6px;
-  border-radius:20px;padding:5px 13px;
-  font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;
-}
-.online-pill{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);color:var(--green);}
-.offline-pill{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);}
-.status-dot{width:6px;height:6px;border-radius:50%;}
-.online-dot{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s ease infinite;}
-.offline-dot{background:var(--red);box-shadow:0 0 8px var(--red);animation:blink 1s ease infinite;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
-
-/* ── LOGIN ── */
-.login-hero{
-  flex:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:40px 24px;
-}
-.crown-wrap{position:relative;margin-bottom:32px;text-align:center;}
-.crown-pulse{
-  position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  width:130px;height:130px;
-  background:radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%);
-  border-radius:50%;
-  animation:pulse-glow 2.8s ease-in-out infinite;
-}
-@keyframes pulse-glow{
-  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.5;}
-  50%{transform:translate(-50%,-50%) scale(1.35);opacity:1;}
-}
-.crown-emoji{
-  font-size:64px;position:relative;z-index:1;display:block;
-  animation:float 3.5s ease-in-out infinite;
-  filter:drop-shadow(0 0 22px rgba(167,139,250,0.9));
-}
-@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
-
-.hero-title{
-  font-weight:900;font-size:44px;letter-spacing:7px;
-  line-height:1;text-align:center;
-  background:linear-gradient(135deg,#a78bfa,#c4b5fd,#e879f9,#a78bfa);
+  font-weight:900;font-size:18px;letter-spacing:5px;
+  background:linear-gradient(90deg,#a78bfa,#c4b5fd,#e879f9,#a78bfa);
   background-size:200% auto;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   animation:shine 4s linear infinite;
-  filter:drop-shadow(0 0 28px rgba(139,92,246,0.45));
-  margin-bottom:6px;
+  filter:drop-shadow(0 0 16px rgba(167,139,250,0.6));
 }
 @keyframes shine{to{background-position:200% center;}}
+
+.online-pill{
+  display:flex;align-items:center;gap:7px;
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--green);letter-spacing:1px;
+  background:rgba(16,185,129,0.07);
+  border:1px solid rgba(16,185,129,0.22);
+  border-radius:20px;padding:5px 12px;
+}
+.online-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 8px var(--green);
+  animation:blink 2s ease infinite;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.25;}}
+
+/* ─── LOGIN SCREEN ─── */
+.login-hero{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:30px 22px 20px;
+}
+
+.crown-section{text-align:center;margin-bottom:28px;position:relative;}
+.crown-rings{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:160px;height:160px;
+  pointer-events:none;
+}
+.crown-ring{
+  position:absolute;inset:0;border-radius:50%;border:1px solid;
+  animation:spin 8s linear infinite;
+}
+.crown-ring:nth-child(1){border-color:rgba(167,139,250,0.3);animation-duration:8s;}
+.crown-ring:nth-child(2){inset:12px;border-color:rgba(232,121,249,0.2);animation-duration:6s;animation-direction:reverse;}
+.crown-ring:nth-child(3){inset:24px;border-color:rgba(196,181,253,0.15);animation-duration:12s;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.crown-emoji{
+  font-size:68px;display:block;position:relative;z-index:1;
+  animation:float 3.5s ease-in-out infinite;
+  filter:drop-shadow(0 0 28px rgba(167,139,250,1));
+}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-14px) rotate(3deg);}}
+
+.hero-title{
+  font-weight:900;font-size:48px;letter-spacing:8px;
+  background:linear-gradient(135deg,#c4b5fd,#e879f9,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 32px rgba(139,92,246,0.5));
+  line-height:1;text-align:center;margin-bottom:4px;
+}
 .hero-sub{
-  font-family:'Share Tech Mono',monospace;
-  font-size:10px;letter-spacing:7px;
-  color:rgba(237,233,254,0.2);text-align:center;
-  margin-bottom:44px;
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  letter-spacing:8px;color:rgba(237,233,254,0.18);
+  text-align:center;margin-bottom:36px;
 }
 
 /* Login card */
 .login-card{
   width:100%;max-width:340px;
-  background:linear-gradient(145deg,rgba(8,8,15,0.95),rgba(12,8,22,0.98));
-  border:1px solid var(--border);border-radius:18px;
-  padding:30px 24px;position:relative;overflow:hidden;
-  box-shadow:0 24px 64px rgba(0,0,0,0.7),inset 0 1px 0 rgba(167,139,250,0.08);
+  background:linear-gradient(145deg,rgba(7,7,15,0.97),rgba(12,8,25,0.99));
+  border:1px solid rgba(124,58,237,0.28);
+  border-radius:20px;padding:28px 22px;
+  position:relative;overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,0.8),0 0 0 1px rgba(167,139,250,0.04),inset 0 1px 0 rgba(167,139,250,0.07);
 }
 .login-card::before{
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,#8b5cf6,#e879f9,transparent);
+  background:linear-gradient(90deg,transparent,#7c3aed,#e879f9,transparent);
 }
+.login-card::after{
+  content:'';position:absolute;bottom:0;left:20%;right:20%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(167,139,250,0.15),transparent);
+}
+
 .field-lbl{
   font-family:'Share Tech Mono',monospace;
-  font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:8px;
+  font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:7px;
 }
-.inp-wrap{position:relative;margin-bottom:8px;}
+.inp-wrap{position:relative;margin-bottom:6px;}
 .inp-ico{
-  position:absolute;left:14px;top:50%;transform:translateY(-50%);
-  font-size:15px;opacity:0.3;
+  position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  font-size:14px;opacity:0.25;pointer-events:none;
 }
 .inp{
   width:100%;
-  background:rgba(109,40,217,0.05);
-  border:1px solid rgba(109,40,217,0.22);
-  border-radius:10px;
-  padding:13px 14px 13px 42px;
+  background:rgba(124,58,237,0.05);
+  border:1px solid rgba(124,58,237,0.18);
+  border-radius:11px;
+  padding:13px 13px 13px 40px;
   color:#fff;
   font-family:'Share Tech Mono',monospace;
   font-size:13px;letter-spacing:2px;
   outline:none;
-  transition:border-color 0.2s,background 0.2s,box-shadow 0.2s;
+  transition:border-color 0.2s,background 0.2s,box-shadow 0.25s;
 }
-.inp:focus{border-color:var(--c2);background:rgba(109,40,217,0.09);box-shadow:0 0 0 3px rgba(109,40,217,0.14);}
-.inp::placeholder{color:rgba(255,255,255,0.12);}
+.inp:focus{
+  border-color:var(--c3);
+  background:rgba(124,58,237,0.09);
+  box-shadow:0 0 0 3px rgba(124,58,237,0.12),0 0 20px rgba(124,58,237,0.08);
+}
+.inp::placeholder{color:rgba(255,255,255,0.1);}
 .inp.err-shake{animation:shake 0.35s ease;border-color:var(--red)!important;}
-@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-6px);}40%,80%{transform:translateX(6px);}}
-.inp-gap{margin-top:16px;}
-.err-msg{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--red);min-height:18px;margin-top:6px;letter-spacing:1px;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%,75%{transform:translateX(-5px);}50%{transform:translateX(5px);}}
+.inp-gap{margin-top:14px;}
+.err-msg{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--red);min-height:16px;margin-top:5px;letter-spacing:1px;
+}
+
 .btn-main{
-  width:100%;margin-top:20px;
-  background:linear-gradient(135deg,#5b21b6,#7c3aed,#8b5cf6);
+  width:100%;margin-top:18px;
+  background:linear-gradient(135deg,#4c1d95,#6d28d9,#7c3aed,#8b5cf6);
+  background-size:200% auto;
   color:#fff;
-  font-family:'Orbitron',sans-serif;font-weight:700;font-size:14px;letter-spacing:5px;
-  padding:15px;border:none;border-radius:10px;cursor:pointer;
+  font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:5px;
+  padding:15px;border:none;border-radius:11px;cursor:pointer;
   position:relative;overflow:hidden;
-  transition:transform 0.15s,box-shadow 0.2s;
-  box-shadow:0 4px 28px rgba(109,40,217,0.45);
+  transition:transform 0.15s,box-shadow 0.2s,background-position 0.4s;
+  box-shadow:0 6px 32px rgba(109,40,217,0.5),0 0 0 1px rgba(167,139,250,0.1);
 }
-.btn-main::after{
-  content:'';position:absolute;inset:-50%;
-  background:linear-gradient(transparent,rgba(255,255,255,0.04),transparent);
-  transform:translateY(-100%) rotate(45deg);
-  transition:transform 0.5s;
+.btn-main::before{
+  content:'';position:absolute;top:-50%;left:-60%;
+  width:40%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);
+  transform:skewX(-20deg);
+  transition:left 0.5s;
 }
-.btn-main:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(109,40,217,0.6);}
-.btn-main:hover::after{transform:translateY(100%) rotate(45deg);}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(109,40,217,0.65);}
+.btn-main:hover::before{left:120%;}
 .btn-main:active{transform:translateY(1px);}
-.btn-main:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
+.btn-main:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
 
-/* ── PLATFORM ── */
-.plat-hero{
+.tagline{
+  font-family:'Share Tech Mono',monospace;font-size:8px;
+  letter-spacing:5px;color:rgba(255,255,255,0.05);
+  text-align:center;padding:16px 0 12px;margin-top:auto;
+}
+
+/* ─── PLATFORM SCREEN ─── */
+.plat-screen{
   flex:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:30px 22px;
+  padding:20px;
 }
-.plat-hd{text-align:center;margin-bottom:38px;}
-.plat-hd h2{font-weight:900;font-size:28px;letter-spacing:5px;color:var(--text);margin-bottom:8px;}
-.plat-hd p{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:5px;color:var(--muted);}
 
-/* Key info box */
-.key-info-box{
-  display:flex;align-items:center;gap:12px;
-  background:rgba(109,40,217,0.07);
-  border:1px solid rgba(109,40,217,0.2);
-  border-radius:12px;padding:12px 16px;
-  margin-bottom:30px;width:100%;max-width:340px;
+.key-box{
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(124,58,237,0.06),rgba(91,33,182,0.04));
+  border:1px solid rgba(124,58,237,0.16);
+  border-radius:13px;padding:11px 14px;margin-bottom:24px;
 }
-.ki-icon{font-size:18px;opacity:0.6;}
-.ki-text{flex:1;}
-.ki-key{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--c3);letter-spacing:1px;}
-.ki-exp{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:3px;}
-.ki-logout{
-  background:transparent;border:1px solid rgba(109,40,217,0.25);
+.key-box-ico{font-size:16px;opacity:0.5;}
+.key-box-info{flex:1;}
+.key-box-val{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--c4);letter-spacing:1px;}
+.key-box-exp{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
+.key-box-btn{
+  background:transparent;border:1px solid rgba(124,58,237,0.22);
   color:var(--muted);font-family:'Share Tech Mono',monospace;
-  font-size:9px;letter-spacing:1px;padding:5px 10px;
-  border-radius:7px;cursor:pointer;transition:border-color 0.2s,color 0.2s;
+  font-size:8px;letter-spacing:1px;padding:5px 9px;
+  border-radius:7px;cursor:pointer;transition:all 0.2s;
 }
-.ki-logout:hover{border-color:var(--c2);color:var(--c2);}
+.key-box-btn:hover{border-color:var(--c3);color:var(--c3);}
 
-.plat-grid{display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px;}
-.plat-tile{
-  background:var(--card);border-radius:16px;padding:20px 18px;
-  cursor:pointer;position:relative;overflow:hidden;
-  transition:transform 0.2s,box-shadow 0.2s;
-  display:flex;align-items:center;gap:16px;
+/* Platform header */
+.plat-header{text-align:center;margin-bottom:28px;}
+.plat-header-sub{
+  font-family:'Share Tech Mono',monospace;font-size:8px;
+  letter-spacing:6px;color:rgba(167,139,250,0.35);
+  margin-bottom:8px;
 }
-.plat-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;}
-.plat-tile:hover{transform:translateY(-3px);}
-.pt-blue{border:1px solid rgba(56,189,248,0.2);}
-.pt-blue::before{background:linear-gradient(90deg,transparent,#38bdf8,transparent);}
-.pt-blue:hover{box-shadow:0 10px 32px rgba(56,189,248,0.18);border-color:rgba(56,189,248,0.45);}
-.pt-gold{border:1px solid rgba(245,158,11,0.2);}
-.pt-gold::before{background:linear-gradient(90deg,transparent,#f59e0b,transparent);}
-.pt-gold:hover{box-shadow:0 10px 32px rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.45);}
-.pt-ico{width:52px;height:52px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
-.pt-ico-blue{background:linear-gradient(135deg,rgba(56,189,248,0.18),rgba(14,165,233,0.08));box-shadow:0 4px 16px rgba(56,189,248,0.18);}
-.pt-ico-gold{background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(217,119,6,0.08));box-shadow:0 4px 16px rgba(245,158,11,0.18);}
-.pt-info{flex:1;}
-.pt-name{font-weight:900;font-size:22px;letter-spacing:3px;line-height:1;}
-.pt-name-blue{color:#38bdf8;filter:drop-shadow(0 0 8px rgba(56,189,248,0.45));}
-.pt-name-gold{color:#f59e0b;filter:drop-shadow(0 0 8px rgba(245,158,11,0.45));}
-.pt-games{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:5px;}
-.pt-arr{font-size:22px;color:var(--muted);opacity:0.5;}
+.plat-header-title{
+  font-weight:900;font-size:26px;letter-spacing:5px;
+  background:linear-gradient(135deg,var(--c4),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
 
-/* ── GAMES ── */
-.games-wrap{flex:1;padding:18px 20px 36px;}
-.games-nav{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
-.btn-back{
-  background:rgba(109,40,217,0.08);
-  border:1px solid rgba(109,40,217,0.22);
-  color:var(--muted);font-family:'Orbitron',sans-serif;
-  font-size:11px;letter-spacing:2px;
-  padding:8px 14px;border-radius:8px;cursor:pointer;
-  transition:border-color 0.2s,color 0.2s;
+/* Platform cards */
+.plat-cards{display:flex;flex-direction:column;gap:14px;}
+
+.plat-card{
+  border-radius:20px;padding:0;cursor:pointer;
+  position:relative;overflow:hidden;
+  transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.25s;
 }
-.btn-back:hover{border-color:var(--c2);color:var(--c3);}
-.plat-badge-lbl{font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:3px;}
-.games-hd{margin-bottom:22px;}
-.games-title{font-weight:900;font-size:26px;letter-spacing:5px;color:var(--text);margin-bottom:4px;}
-.games-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:4px;}
-.games-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.game-tile{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:14px;padding:22px 14px;
-  cursor:pointer;position:relative;overflow:hidden;
-  transition:border-color 0.2s,transform 0.2s,box-shadow 0.2s;
+.plat-card:active{transform:scale(0.97)!important;}
+
+/* 1XBET card */
+.pc-xbet{
+  background:linear-gradient(135deg,#0a0a1e 0%,#0d0d24 40%,#080814 100%);
+  border:1px solid rgba(56,189,248,0.25);
+  box-shadow:0 8px 32px rgba(0,0,0,0.5),inset 0 1px 0 rgba(56,189,248,0.08);
 }
-.game-tile:hover{border-color:var(--c2);transform:translateY(-3px);box-shadow:0 8px 28px rgba(109,40,217,0.2);}
-.gt-badge{
-  position:absolute;top:10px;right:10px;
+.pc-xbet:hover{
+  transform:translateY(-4px);
+  box-shadow:0 16px 48px rgba(56,189,248,0.15),0 0 0 1px rgba(56,189,248,0.35);
+}
+.pc-xbet::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#38bdf8,#0ea5e9,transparent);
+}
+
+/* 1WIN card */
+.pc-1win{
+  background:linear-gradient(135deg,#0f0a00 0%,#1a1000 40%,#0a0800 100%);
+  border:1px solid rgba(245,158,11,0.25);
+  box-shadow:0 8px 32px rgba(0,0,0,0.5),inset 0 1px 0 rgba(245,158,11,0.08);
+}
+.pc-1win:hover{
+  transform:translateY(-4px);
+  box-shadow:0 16px 48px rgba(245,158,11,0.15),0 0 0 1px rgba(245,158,11,0.35);
+}
+.pc-1win::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#f59e0b,#fbbf24,transparent);
+}
+
+.pc-inner{display:flex;align-items:center;padding:20px 18px;gap:16px;}
+
+.pc-logo-wrap{
+  width:64px;height:64px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;position:relative;overflow:hidden;
+}
+.pc-logo-xbet{
+  background:linear-gradient(135deg,rgba(56,189,248,0.15),rgba(14,165,233,0.05));
+  border:1px solid rgba(56,189,248,0.2);
+}
+.pc-logo-1win{
+  background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(217,119,6,0.05));
+  border:1px solid rgba(245,158,11,0.2);
+}
+.pc-logo-ico{font-size:30px;filter:drop-shadow(0 0 12px currentColor);}
+.pc-logo-xbet .pc-logo-ico{filter:drop-shadow(0 0 12px rgba(56,189,248,0.8));}
+.pc-logo-1win .pc-logo-ico{filter:drop-shadow(0 0 12px rgba(245,158,11,0.8));}
+
+.pc-info{flex:1;}
+.pc-name{
+  font-weight:900;font-size:26px;letter-spacing:3px;line-height:1;margin-bottom:6px;
+}
+.pc-name-xbet{
+  color:#38bdf8;
+  text-shadow:0 0 20px rgba(56,189,248,0.5);
+}
+.pc-name-1win{
+  color:#f59e0b;
+  text-shadow:0 0 20px rgba(245,158,11,0.5);
+}
+.pc-games-list{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.pc-game-tag{
   font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
-  color:var(--green);background:rgba(16,185,129,0.1);
-  border:1px solid rgba(16,185,129,0.25);padding:2px 7px;border-radius:4px;
+  padding:3px 7px;border-radius:5px;
 }
-.gt-ico{font-size:34px;margin-bottom:10px;display:block;}
-.gt-name{font-weight:700;font-size:14px;letter-spacing:2px;color:var(--c3);}
-.gt-desc{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;letter-spacing:1px;}
-.game-tile-full{grid-column:1/-1;}
+.pc-game-tag-xbet{
+  background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);color:#38bdf8;
+}
+.pc-game-tag-1win{
+  background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);color:#f59e0b;
+}
+.pc-count{
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;
+}
 
-/* ── SIGNAL SCREEN ── */
-.sig-nav{display:flex;align-items:center;padding:20px 20px 0;gap:12px;}
-.sig-game-lbl{font-weight:700;font-size:14px;letter-spacing:3px;color:var(--muted);}
+.pc-arrow{
+  font-size:20px;color:var(--muted);opacity:0.4;flex-shrink:0;
+  transition:opacity 0.2s,transform 0.2s;
+}
+.plat-card:hover .pc-arrow{opacity:0.9;transform:translateX(3px);}
+
+/* Bottom decoration on platform cards */
+.pc-bottom{
+  padding:10px 18px 14px;
+  display:flex;align-items:center;gap:8px;
+  border-top:1px solid rgba(255,255,255,0.03);
+}
+.pc-accuracy{
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+}
+.pc-accuracy-xbet{color:rgba(56,189,248,0.5);}
+.pc-accuracy-1win{color:rgba(245,158,11,0.5);}
+.pc-live-badge{
+  margin-left:auto;
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;
+  padding:2px 8px;border-radius:4px;
+  background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:var(--green);
+}
+
+/* ─── GAMES SCREEN ─── */
+.games-screen{flex:1;display:flex;flex-direction:column;padding:18px 18px 24px;}
+
+.games-topnav{
+  display:flex;align-items:center;gap:12px;margin-bottom:20px;
+}
+.btn-back{
+  background:rgba(124,58,237,0.07);
+  border:1px solid rgba(124,58,237,0.18);
+  color:var(--muted);font-family:'Orbitron',sans-serif;
+  font-size:10px;letter-spacing:2px;
+  padding:8px 13px;border-radius:9px;cursor:pointer;
+  transition:all 0.2s;
+}
+.btn-back:hover{border-color:var(--c3);color:var(--c3);}
+
+.plat-badge{
+  font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:3px;font-weight:700;
+  padding:5px 12px;border-radius:8px;
+}
+.plat-badge-xbet{
+  color:#38bdf8;background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.2);
+}
+.plat-badge-1win{
+  color:#f59e0b;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);
+}
+
+.games-hd{margin-bottom:18px;}
+.games-hd-title{font-weight:900;font-size:22px;letter-spacing:4px;margin-bottom:4px;}
+.games-hd-sub{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:4px;}
+
+/* Games grid */
+.games-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.game-card{
+  background:linear-gradient(145deg,rgba(8,8,20,0.95),rgba(12,8,24,0.98));
+  border:1px solid rgba(124,58,237,0.18);
+  border-radius:16px;padding:18px 14px 14px;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+.game-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(167,139,250,0.2),transparent);
+}
+.game-card::after{
+  content:'';position:absolute;inset:0;border-radius:16px;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(124,58,237,0.06),transparent);
+  opacity:0;transition:opacity 0.2s;pointer-events:none;
+}
+.game-card:hover{
+  border-color:var(--c2);
+  transform:translateY(-4px) scale(1.02);
+  box-shadow:0 12px 36px rgba(124,58,237,0.25),0 0 0 1px rgba(124,58,237,0.3);
+}
+.game-card:hover::after{opacity:1;}
+.game-card:active{transform:translateY(0) scale(0.97);}
+.game-card-full{grid-column:1/-1;flex-direction:row;gap:14px;padding:16px 18px;align-items:center;justify-content:flex-start;text-align:left;}
+
+.gc-badge{
+  position:absolute;top:9px;right:9px;
+  font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;
+  padding:2px 6px;border-radius:4px;
+}
+.gcb-live{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--green);}
+.gcb-hot{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:var(--red);}
+.gcb-new{background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);color:var(--blue);}
+
+.gc-ico{
+  font-size:38px;margin-bottom:10px;
+  display:block;
+  filter:drop-shadow(0 0 16px rgba(167,139,250,0.5));
+  transition:transform 0.25s;
+}
+.game-card:hover .gc-ico{transform:scale(1.15) rotate(-5deg);}
+.game-card-full .gc-ico{margin-bottom:0;font-size:32px;}
+
+.gc-name{
+  font-weight:700;font-size:12px;letter-spacing:2px;
+  color:var(--c4);margin-bottom:4px;
+  transition:color 0.2s;
+}
+.game-card:hover .gc-name{color:#fff;}
+.gc-desc{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;}
+
+.gc-info{flex:1;}
+
+/* ─── SIGNAL SCREEN ─── */
+.sig-screen{flex:1;display:flex;flex-direction:column;}
+.sig-topnav{display:flex;align-items:center;padding:0 18px;gap:12px;margin-bottom:4px;}
+.sig-game-tag{
+  font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;
+  color:var(--c3);padding:5px 12px;
+  background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);
+  border-radius:8px;
+}
 
 .sig-body{
   flex:1;display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  padding:24px 20px 36px;
+  padding:10px 20px 30px;
 }
 
-/* Radar orb */
+/* ORB */
 .sig-orb{
   position:relative;
-  width:clamp(230px,62vw,290px);
-  height:clamp(230px,62vw,290px);
-  margin-bottom:32px;
+  width:clamp(220px,60vw,280px);
+  height:clamp(220px,60vw,280px);
+  margin-bottom:28px;
 }
-.orb-ring1{
+.orb-bg{
   position:absolute;inset:0;border-radius:50%;
-  border:2px solid transparent;
-  border-top-color:var(--c2);
-  border-right-color:rgba(139,92,246,0.2);
-  animation:spin1 3.5s linear infinite;
+  background:radial-gradient(circle at 50% 50%,rgba(124,58,237,0.08) 0%,transparent 70%);
+  animation:orb-pulse 3s ease-in-out infinite;
 }
-.orb-ring2{
-  position:absolute;inset:16px;border-radius:50%;
-  border:1px solid transparent;
-  border-bottom-color:var(--c3);
-  border-left-color:rgba(196,181,253,0.15);
-  animation:spin1 2.2s linear infinite reverse;
-}
-.orb-ring3{
-  position:absolute;inset:30px;border-radius:50%;
-  border:1px dashed rgba(109,40,217,0.14);
-  animation:spin1 9s linear infinite;
-}
-@keyframes spin1{to{transform:rotate(360deg);}}
+@keyframes orb-pulse{0%,100%{transform:scale(1);opacity:0.5;}50%{transform:scale(1.1);opacity:1;}}
 
-/* Corner accents on the orb */
-.orb-ring4{
-  position:absolute;inset:8px;border-radius:50%;
-  border:1px solid transparent;
-  border-top-color:rgba(232,121,249,0.12);
-  border-bottom-color:rgba(232,121,249,0.12);
-  animation:spin1 5s linear infinite;
+.orb-ring{
+  position:absolute;border-radius:50%;border:1px solid;
 }
+.orb-r1{inset:0;border-color:rgba(124,58,237,0.4);border-top-color:var(--c2);border-width:2px;animation:spin 3.5s linear infinite;}
+.orb-r2{inset:14px;border-color:rgba(196,181,253,0.12);border-bottom-color:var(--c4);animation:spin 2.3s linear infinite reverse;}
+.orb-r3{inset:26px;border-color:rgba(109,40,217,0.08);border-left-color:var(--pink);border-width:1px;animation:spin 7s linear infinite;}
+.orb-r4{inset:38px;border-color:rgba(232,121,249,0.05);border-right-color:rgba(232,121,249,0.2);animation:spin 5s linear infinite reverse;}
 
-.scan-container{position:absolute;inset:42px;border-radius:50%;overflow:hidden;pointer-events:none;}
-.scan-container::after{
+.orb-scan{position:absolute;inset:40px;border-radius:50%;overflow:hidden;pointer-events:none;}
+.orb-scan::after{
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,rgba(139,92,246,0.7),transparent);
-  animation:scan-anim 2.4s ease-in-out infinite;
+  background:linear-gradient(90deg,transparent,rgba(124,58,237,0.8),rgba(196,181,253,0.4),transparent);
+  animation:scan 2.5s ease-in-out infinite;
 }
-@keyframes scan-anim{
+@keyframes scan{
   0%{transform:translateY(0);opacity:0;}
-  15%{opacity:1;}
-  85%{opacity:1;}
-  100%{transform:translateY(calc(clamp(146px,39vw,206px)));opacity:0;}
+  10%{opacity:1;}85%{opacity:0.8;}
+  100%{transform:translateY(calc(clamp(140px,38vw,200px)));opacity:0;}
 }
 
 .orb-core{
-  position:absolute;inset:42px;border-radius:50%;
-  background:radial-gradient(circle at 40% 36%, #0a0a16 0%, #030308 100%);
+  position:absolute;inset:40px;border-radius:50%;
+  background:radial-gradient(circle at 45% 40%,#090915 0%,#03030a 100%);
   border:1px solid rgba(255,255,255,0.04);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  box-shadow:inset 0 0 40px rgba(0,0,0,0.7);
+  box-shadow:inset 0 0 50px rgba(0,0,0,0.8);
 }
+
 .sig-val{
-  font-weight:900;font-size:clamp(32px,9vw,56px);color:#fff;
-  line-height:1;
-  opacity:0;transform:scale(0.65) translateY(10px);
-  transition:opacity 0.3s,transform 0.38s cubic-bezier(0.34,1.56,0.64,1);
-  letter-spacing:1px;
+  font-weight:900;font-size:clamp(28px,8vw,50px);color:#fff;
+  line-height:1;text-align:center;
+  opacity:0;transform:scale(0.5) translateY(8px);
+  transition:opacity 0.35s,transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  letter-spacing:1px;padding:0 4px;
 }
 .sig-val.show{opacity:1;transform:scale(1) translateY(0);}
-.sig-val.big{color:var(--c3);text-shadow:0 0 32px rgba(167,139,250,0.65);}
-.sig-val.mega{color:#fb923c;text-shadow:0 0 38px rgba(251,146,60,0.75);}
+.sig-val.big{color:var(--c4);text-shadow:0 0 36px rgba(196,181,253,0.7);}
+.sig-val.mega{color:#fb923c;text-shadow:0 0 40px rgba(251,146,60,0.8);}
+.sig-val.chicken{color:var(--gold2);font-size:clamp(18px,5vw,28px);text-shadow:0 0 24px rgba(251,191,36,0.7);}
+
 .sig-sublbl{
-  font-family:'Share Tech Mono',monospace;font-size:8px;
-  letter-spacing:6px;color:rgba(255,255,255,0.18);margin-top:6px;
-  opacity:0;transition:opacity 0.3s 0.12s;
+  font-family:'Share Tech Mono',monospace;font-size:7px;
+  letter-spacing:5px;color:rgba(255,255,255,0.15);margin-top:5px;
+  opacity:0;transition:opacity 0.3s 0.15s;
 }
 .sig-sublbl.show{opacity:1;}
 
-/* Stats */
-.sig-stats{display:flex;gap:28px;margin-bottom:28px;align-items:center;}
-.stat{text-align:center;}
-.stat-num{font-family:'Share Tech Mono',monospace;font-size:20px;color:var(--c2);font-weight:700;}
-.stat-lbl{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;margin-top:3px;}
-.stat-sep{width:1px;height:38px;background:var(--border);}
+/* Stats row */
+.sig-stats{
+  display:flex;gap:0;margin-bottom:24px;
+  background:rgba(8,8,20,0.8);border:1px solid rgba(124,58,237,0.15);
+  border-radius:12px;overflow:hidden;
+  width:100%;max-width:280px;
+}
+.stat{flex:1;text-align:center;padding:10px 6px;}
+.stat+.stat{border-left:1px solid rgba(124,58,237,0.12);}
+.stat-num{font-family:'Share Tech Mono',monospace;font-size:17px;color:var(--c3);font-weight:700;}
+.stat-lbl{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
 
 /* Signal button */
 .sig-btn{
-  background:linear-gradient(135deg,#4c1d95,#6d28d9,#7c3aed);
+  background:linear-gradient(135deg,#3b0764,#5b21b6,#6d28d9,#7c3aed);
+  background-size:200% auto;
   color:#fff;font-family:'Orbitron',sans-serif;font-weight:700;
-  font-size:15px;letter-spacing:6px;
-  padding:16px 54px;border:none;border-radius:12px;cursor:pointer;
+  font-size:14px;letter-spacing:6px;
+  padding:16px 50px;border:none;border-radius:13px;cursor:pointer;
   position:relative;overflow:hidden;
-  box-shadow:0 4px 28px rgba(109,40,217,0.45);
-  transition:transform 0.15s,box-shadow 0.2s,opacity 0.2s;
+  box-shadow:0 6px 32px rgba(91,33,182,0.55),0 0 0 1px rgba(167,139,250,0.15);
+  transition:transform 0.15s,box-shadow 0.2s,background-position 0.4s,opacity 0.2s;
 }
 .sig-btn::before{
-  content:'';position:absolute;inset:-1px;border-radius:12px;
-  background:linear-gradient(135deg,rgba(255,255,255,0.06),transparent);
-  pointer-events:none;
+  content:'';position:absolute;top:-50%;left:-60%;
+  width:40%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent);
+  transform:skewX(-20deg);
+  transition:left 0.6s;
 }
-.sig-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 36px rgba(109,40,217,0.6);}
+.sig-btn:hover:not(:disabled){
+  transform:translateY(-3px);
+  box-shadow:0 12px 40px rgba(91,33,182,0.7),0 0 0 1px rgba(167,139,250,0.3);
+}
+.sig-btn:hover::before{left:120%;}
 .sig-btn:active:not(:disabled){transform:translateY(1px);}
-.sig-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none;}
+.sig-btn:disabled{opacity:0.25;cursor:not-allowed;transform:none;box-shadow:none;}
 
-/* Cooldown bar */
-.cd-wrap{width:100%;max-width:280px;margin-top:16px;}
-.cd-track{width:100%;height:2px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;visibility:hidden;}
+/* Cooldown */
+.cd-wrap{width:100%;max-width:260px;margin-top:14px;}
+.cd-track{height:2px;background:rgba(255,255,255,0.04);border-radius:2px;overflow:hidden;visibility:hidden;}
 .cd-track.on{visibility:visible;}
-.cd-prog{height:100%;width:0%;background:linear-gradient(90deg,var(--c1),var(--c3));}
-.cd-txt{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:9px;text-align:center;min-height:15px;}
+.cd-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--c1),var(--c3),var(--pink));}
+.cd-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:8px;text-align:center;min-height:14px;}
 
-/* ── MODALS / OVERLAYS ── */
+/* ─── OVERLAYS ─── */
 .overlay{
   display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,0.88);z-index:500;
+  background:rgba(0,0,0,0.9);z-index:500;
   align-items:center;justify-content:center;
-  padding:20px;backdrop-filter:blur(8px);
+  padding:20px;backdrop-filter:blur(12px);
 }
 .overlay.open{display:flex;}
+
 .modal{
-  background:#0a0a16;
-  border-radius:18px;padding:30px 24px;
+  background:linear-gradient(145deg,#08080f,#0c081a);
+  border-radius:20px;padding:28px 22px;
   max-width:320px;width:100%;text-align:center;
   position:relative;overflow:hidden;
+  box-shadow:0 40px 100px rgba(0,0,0,0.9);
 }
 .modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .modal-warn{border:1px solid rgba(239,68,68,0.3);}
-.modal-warn::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
-.modal-purple{border:1px solid rgba(109,40,217,0.35);}
-.modal-purple::before{background:linear-gradient(90deg,transparent,var(--c2),transparent);}
-.m-ico{font-size:46px;margin-bottom:14px;}
-.m-title{font-weight:900;font-size:18px;letter-spacing:5px;color:var(--text);margin-bottom:12px;}
-.m-body{font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.9;color:var(--muted);margin-bottom:24px;}
+.modal-warn::before{background:linear-gradient(90deg,transparent,#ef4444,transparent);}
+.modal-purple{border:1px solid rgba(124,58,237,0.35);}
+.modal-purple::before{background:linear-gradient(90deg,transparent,var(--c2),var(--pink),transparent);}
+
+.m-ico{font-size:48px;margin-bottom:12px;display:block;}
+.m-title{font-weight:900;font-size:17px;letter-spacing:5px;color:var(--text);margin-bottom:10px;}
+.m-body{font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.9;color:var(--muted);margin-bottom:20px;}
 .m-body strong{color:var(--gold);}
-.m-body .pct{color:var(--blue);}
+
 .m-btn{
   width:100%;font-family:'Orbitron',sans-serif;font-weight:700;
-  font-size:13px;letter-spacing:4px;
+  font-size:12px;letter-spacing:4px;
   padding:13px;border:none;border-radius:10px;cursor:pointer;
-  transition:transform 0.15s;margin-bottom:10px;color:#fff;
+  transition:transform 0.15s,box-shadow 0.2s;
+  margin-bottom:9px;color:#fff;
 }
 .m-btn:last-child{margin-bottom:0;}
 .m-btn:hover{transform:translateY(-1px);}
-.m-btn-red{background:linear-gradient(135deg,#b91c1c,#ef4444);box-shadow:0 4px 20px rgba(239,68,68,0.3);}
+.m-btn-red{background:linear-gradient(135deg,#991b1b,#ef4444);box-shadow:0 4px 20px rgba(239,68,68,0.3);}
 .m-btn-purple{background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 4px 20px rgba(109,40,217,0.3);}
-.m-btn-outline{background:transparent;border:1px solid rgba(109,40,217,0.3);color:var(--muted);box-shadow:none;}
+.m-btn-outline{background:transparent;border:1px solid rgba(124,58,237,0.25);color:var(--muted);box-shadow:none;}
 
-/* ── STATUS SCREENS ── */
-.status-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
-.status-ico{font-size:60px;margin-bottom:22px;display:block;animation:float 3.5s ease-in-out infinite;}
-.status-title{font-weight:900;font-size:22px;letter-spacing:5px;margin-bottom:12px;}
-.status-title-red{color:var(--red);filter:drop-shadow(0 0 12px rgba(239,68,68,0.5));}
-.status-title-gold{color:var(--gold);filter:drop-shadow(0 0 12px rgba(245,158,11,0.5));}
-.status-title-blue{color:var(--blue);filter:drop-shadow(0 0 12px rgba(56,189,248,0.5));}
-.status-msg{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;margin-bottom:30px;letter-spacing:1px;max-width:280px;}
+/* Difficulty buttons */
+.diff-btn{
+  width:100%;font-family:'Orbitron',sans-serif;font-weight:700;
+  font-size:12px;letter-spacing:3px;
+  padding:14px 16px;border:none;border-radius:12px;cursor:pointer;
+  transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  margin-bottom:10px;color:#fff;
+  display:flex;align-items:center;gap:12px;text-align:left;
+}
+.diff-btn:hover{transform:translateX(4px) scale(1.01);}
+.diff-easy{background:linear-gradient(135deg,#065f46,#059669,#10b981);box-shadow:0 4px 20px rgba(16,185,129,0.35);}
+.diff-medium{background:linear-gradient(135deg,#78350f,#b45309,#f59e0b);box-shadow:0 4px 20px rgba(245,158,11,0.35);}
+.diff-hard{background:linear-gradient(135deg,#7f1d1d,#b91c1c,#ef4444);box-shadow:0 4px 20px rgba(239,68,68,0.35);}
+.diff-ico{font-size:22px;flex-shrink:0;}
+.diff-info{flex:1;}
+.diff-name{font-size:13px;letter-spacing:3px;margin-bottom:2px;}
+.diff-steps{font-family:'Share Tech Mono',monospace;font-size:9px;opacity:0.7;letter-spacing:1px;}
 
-/* ── ONLINE COUNTER ── */
-.online-counter{
-  display:flex;align-items:center;gap:8px;
-  font-family:'Share Tech Mono',monospace;font-size:11px;
-  color:var(--green);letter-spacing:2px;
-  background:rgba(16,185,129,0.08);
-  border:1px solid rgba(16,185,129,0.2);
-  border-radius:20px;padding:5px 12px;
+/* ─── STATUS SCREENS ─── */
+.status-screen{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 24px;text-align:center;
 }
-.online-counter-dot{
-  width:6px;height:6px;border-radius:50%;
-  background:var(--green);box-shadow:0 0 8px var(--green);
-  animation:blink 2s ease infinite;
-}
-
-/* ── FOOTER TAGLINE ── */
-.tagline{
-  font-family:'Share Tech Mono',monospace;font-size:9px;
-  letter-spacing:4px;color:rgba(255,255,255,0.06);
-  text-align:center;padding:20px 0 14px;margin-top:auto;
-}
-
-/* ── GAME TILES IMPROVED ── */
-.game-tile{
-  background:linear-gradient(135deg, rgba(109,40,217,0.12), rgba(30,10,60,0.4));
-  border:1px solid rgba(109,40,217,0.25);
-  border-radius:16px;padding:22px 16px;
-  cursor:pointer;position:relative;overflow:hidden;
-  transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);
-  text-align:center;
-}
-.game-tile::before{
-  content:'';position:absolute;inset:0;border-radius:16px;
-  background:linear-gradient(135deg,rgba(255,255,255,0.04),transparent);
-  pointer-events:none;
-}
-.game-tile:hover{
-  border-color:var(--c2);
-  box-shadow:0 0 24px rgba(139,92,246,0.3);
-  transform:translateY(-3px) scale(1.02);
-}
-.game-tile:active{transform:translateY(0) scale(0.98);}
-.game-tile-full{grid-column:1/-1;}
-.gt-badge{
-  position:absolute;top:10px;right:10px;
-  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
-  padding:3px 8px;border-radius:6px;
-  background:linear-gradient(90deg,#6d28d9,#8b5cf6);color:#fff;
-}
-.gt-badge-new{background:linear-gradient(90deg,#059669,#10b981);}
-.gt-ico{font-size:36px;display:block;margin-bottom:10px;filter:drop-shadow(0 0 12px rgba(167,139,250,0.5));}
-.gt-name{font-weight:700;font-size:13px;letter-spacing:3px;color:var(--text);margin-bottom:4px;}
-.gt-desc{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;}
+.status-ico{font-size:64px;margin-bottom:20px;display:block;animation:float 3.5s ease-in-out infinite;}
+.status-title{font-weight:900;font-size:20px;letter-spacing:5px;margin-bottom:10px;}
+.status-title-red{color:var(--red);filter:drop-shadow(0 0 14px rgba(239,68,68,0.6));}
+.status-title-gold{color:var(--gold);filter:drop-shadow(0 0 14px rgba(245,158,11,0.6));}
+.status-title-blue{color:var(--blue);filter:drop-shadow(0 0 14px rgba(56,189,248,0.6));}
+.status-msg{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);line-height:1.9;margin-bottom:28px;letter-spacing:1px;max-width:260px;}
 </style>
 </head>
 <body>
 
-<!-- ── LOGIN SCREEN ── -->
+<div class="bg-fx"></div>
+
+<!-- ── LOGIN ── -->
 <div class="screen active" id="s-key">
   <div class="topbar">
     <div class="brand">KING SIGNAL</div>
-    <div class="online-counter"><div class="online-counter-dot"></div><span id="onlineCount1">—</span> онлайн</div>
+    <div class="online-pill">
+      <div class="online-dot"></div>
+      <span id="oc1">—</span> онлайн
+    </div>
   </div>
   <div class="login-hero">
-    <div class="crown-wrap">
-      <div class="crown-pulse"></div>
+    <div class="crown-section">
+      <div class="crown-rings">
+        <div class="crown-ring"></div>
+        <div class="crown-ring"></div>
+        <div class="crown-ring"></div>
+      </div>
       <span class="crown-emoji">👑</span>
     </div>
     <div class="hero-title">KING</div>
-    <div class="hero-sub">SIGNAL · SYSTEM</div>
+    <div class="hero-sub">S I G N A L · S Y S T E M</div>
     <div class="login-card">
       <div class="field-lbl">PLAYER ID</div>
       <div class="inp-wrap">
         <span class="inp-ico">👤</span>
-        <input class="inp" id="loginIdInp" placeholder="ENTER YOUR ID" autocomplete="off" spellcheck="false">
+        <input class="inp" id="loginId" placeholder="ENTER YOUR ID" autocomplete="off" spellcheck="false" oninput="this.value=this.value.toUpperCase()">
       </div>
       <div class="field-lbl inp-gap">ACCESS KEY</div>
       <div class="inp-wrap">
         <span class="inp-ico">🔑</span>
-        <input class="inp" id="loginKeyInp" placeholder="ENTER YOUR KEY" autocomplete="off" spellcheck="false">
+        <input class="inp" id="loginKey" placeholder="ENTER YOUR KEY" autocomplete="off" spellcheck="false" oninput="this.value=this.value.toUpperCase()">
       </div>
       <div class="err-msg" id="loginErr"></div>
       <button class="btn-main" onclick="doLogin()">ВОЙТИ</button>
     </div>
   </div>
-  <div class="tagline">KING SIGNAL v6.0 · AI POWERED</div>
+  <div class="tagline">KING SIGNAL v8.0 · AI POWERED · AUTHORIZED USE ONLY</div>
 </div>
 
-<!-- ── PLATFORM SELECT ── -->
+<!-- ── PLATFORM ── -->
 <div class="screen" id="s-platform">
   <div class="topbar">
     <div class="brand">KING SIGNAL</div>
-    <div class="online-counter"><div class="online-counter-dot"></div><span id="onlineCount2">—</span> онлайн</div>
-  </div>
-    <div class="key-info-box">
-      <div class="ki-icon">🔑</div>
-      <div class="ki-text">
-        <div class="ki-key" id="kiKeyDisp">—</div>
-        <div class="ki-exp" id="kiExpDisp">—</div>
-      </div>
-      <button class="ki-logout" onclick="goToKeyScreen()">ВЫЙТИ</button>
-    </div>
-    <div class="plat-hd">
-      <h2>ПЛАТФОРМА</h2>
-      <p>ВЫБЕРИ ПЛОЩАДКУ</p>
-    </div>
-    <div class="plat-grid">
-      <div class="plat-tile pt-blue" onclick="selectPlatform('1xbet')">
-        <div class="pt-ico pt-ico-blue">🎲</div>
-        <div class="pt-info">
-          <div class="pt-name pt-name-blue">1XBET</div>
-          <div class="pt-games">AVIATOR · CRASH · CHICKEN ROAD</div>
-        </div>
-        <div class="pt-arr">›</div>
-      </div>
-      <div class="plat-tile pt-gold" onclick="selectPlatform('1win')">
-        <div class="pt-ico pt-ico-gold">🏆</div>
-        <div class="pt-info">
-          <div class="pt-name pt-name-gold">1WIN</div>
-          <div class="pt-games">LUCKY JET · MINES · ROCKET · +3</div>
-        </div>
-        <div class="pt-arr">›</div>
-      </div>
+    <div class="online-pill">
+      <div class="online-dot"></div>
+      <span id="oc2">—</span> онлайн
     </div>
   </div>
-  <div class="tagline">KING SIGNAL v6.0</div>
+  <div class="plat-screen">
+    <div class="key-box">
+      <div class="key-box-ico">🔑</div>
+      <div class="key-box-info">
+        <div class="key-box-val" id="kiKey">—</div>
+        <div class="key-box-exp" id="kiExp">—</div>
+      </div>
+      <button class="key-box-btn" onclick="goToKeyScreen()">ВЫЙТИ</button>
+    </div>
+
+    <div class="plat-header">
+      <div class="plat-header-sub">ВЫБЕРИТЕ ПЛОЩАДКУ</div>
+      <div class="plat-header-title">ПЛАТФОРМА</div>
+    </div>
+
+    <div class="plat-cards">
+
+      <!-- 1XBET -->
+      <div class="plat-card pc-xbet" onclick="selectPlatform('1xbet')">
+        <div class="pc-inner">
+          <div class="pc-logo-wrap pc-logo-xbet">
+            <span class="pc-logo-ico">🎲</span>
+          </div>
+          <div class="pc-info">
+            <div class="pc-name pc-name-xbet">1XBET</div>
+            <div class="pc-games-list">
+              <span class="pc-game-tag pc-game-tag-xbet">AVIATOR</span>
+              <span class="pc-game-tag pc-game-tag-xbet">CRASH</span>
+              <span class="pc-game-tag pc-game-tag-xbet">CHICKEN ROAD</span>
+            </div>
+            <div class="pc-count">3 ИГРЫ ДОСТУПНЫ</div>
+          </div>
+          <div class="pc-arrow">›</div>
+        </div>
+        <div class="pc-bottom">
+          <span class="pc-accuracy pc-accuracy-xbet">⚡ ТОЧНОСТЬ 70-85%</span>
+          <span class="pc-live-badge">● LIVE</span>
+        </div>
+      </div>
+
+      <!-- 1WIN -->
+      <div class="plat-card pc-1win" onclick="selectPlatform('1win')">
+        <div class="pc-inner">
+          <div class="pc-logo-wrap pc-logo-1win">
+            <span class="pc-logo-ico">🏆</span>
+          </div>
+          <div class="pc-info">
+            <div class="pc-name pc-name-1win">1WIN</div>
+            <div class="pc-games-list">
+              <span class="pc-game-tag pc-game-tag-1win">LUCKY JET</span>
+              <span class="pc-game-tag pc-game-tag-1win">MINES</span>
+              <span class="pc-game-tag pc-game-tag-1win">+4 ИГРЫ</span>
+            </div>
+            <div class="pc-count">6 ИГР ДОСТУПНО</div>
+          </div>
+          <div class="pc-arrow">›</div>
+        </div>
+        <div class="pc-bottom">
+          <span class="pc-accuracy pc-accuracy-1win">⚡ ТОЧНОСТЬ 70-80%</span>
+          <span class="pc-live-badge">● LIVE</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="tagline">KING SIGNAL v8.0</div>
 </div>
 
-<!-- ── GAMES LIST ── -->
+<!-- ── GAMES ── -->
 <div class="screen" id="s-games">
   <div class="topbar">
     <div class="brand">KING SIGNAL</div>
-    <div class="online-counter"><div class="online-counter-dot"></div><span id="onlineCount3">—</span> онлайн</div>
+    <div class="online-pill">
+      <div class="online-dot"></div>
+      <span id="oc3">—</span> онлайн
+    </div>
   </div>
-  <div class="games-wrap">
-    <div class="games-nav">
+  <div class="games-screen">
+    <div class="games-topnav">
       <button class="btn-back" onclick="show('s-platform')">← НАЗАД</button>
-      <div class="plat-badge-lbl" id="platformBadge"></div>
+      <div class="plat-badge" id="platBadge"></div>
     </div>
     <div class="games-hd">
-      <div class="games-title">ИГРЫ</div>
-      <div class="games-sub">ВЫБЕРИ ИГРУ · ПОЛУЧИ СИГНАЛ</div>
+      <div class="games-hd-title">ИГРЫ</div>
+      <div class="games-hd-sub">ВЫБЕРИ ИГРУ · ПОЛУЧИ СИГНАЛ</div>
     </div>
     <div class="games-grid" id="gamesGrid"></div>
   </div>
-  <div class="tagline">KING SIGNAL v6.0</div>
+  <div class="tagline">KING SIGNAL v8.0</div>
 </div>
 
-<!-- ── DIFFICULTY OVERLAY (Chicken Road) ── -->
-<div class="overlay" id="diffOverlay">
-  <div class="modal modal-purple">
-    <div class="m-ico">🐔</div>
-    <div class="m-title">CHICKEN ROAD</div>
-    <div class="m-body">Выберите <strong>сложность</strong> игры:</div>
-    <button class="m-btn" style="background:linear-gradient(135deg,#10b981,#059669);margin-bottom:10px;width:100%" onclick="selectDifficulty('easy')">
-      🟢 ЛЁГКИЙ <span style="opacity:0.6;font-size:11px">&nbsp;· 3–12 шагов</span>
-    </button>
-    <button class="m-btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);margin-bottom:10px;width:100%" onclick="selectDifficulty('medium')">
-      🟡 СРЕДНИЙ <span style="opacity:0.6;font-size:11px">&nbsp;· 3–6 шагов</span>
-    </button>
-    <button class="m-btn" style="background:linear-gradient(135deg,#ef4444,#dc2626);margin-bottom:10px;width:100%" onclick="selectDifficulty('hard')">
-      🔴 СЛОЖНЫЙ <span style="opacity:0.6;font-size:11px">&nbsp;· 1–5 шагов</span>
-    </button>
-    <button class="m-btn" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)" onclick="document.getElementById('diffOverlay').classList.remove('open')">❌ ОТМЕНА</button>
-  </div>
-</div>
-
-<!-- ── WARNING OVERLAY ── -->
-<div class="overlay" id="warnOverlay">
-  <div class="modal modal-warn">
-    <div class="m-ico">⚠️</div>
-    <div class="m-title">ВНИМАНИЕ</div>
-    <div class="m-body">
-      Точность сигнала — <span class="pct">70%</span><br>
-      Возможны <strong>неточные прогнозы</strong>.<br><br>
-      Используйте на свой страх и риск.
-    </div>
-    <button class="m-btn m-btn-red" onclick="confirmWarning()">ПОНЯЛ — ВОЙТИ</button>
-  </div>
-</div>
-
-<!-- ── SIGNAL SCREEN ── -->
+<!-- ── SIGNAL ── -->
 <div class="screen" id="s-signal">
-  <div class="sig-nav">
-    <button class="btn-back" onclick="show('s-games')">← НАЗАД</button>
-    <div class="sig-game-lbl" id="signalGameLbl"></div>
-  </div>
-  <div class="sig-body">
-    <div class="sig-orb">
-      <div class="orb-ring4"></div>
-      <div class="orb-ring1"></div>
-      <div class="orb-ring2"></div>
-      <div class="orb-ring3"></div>
-      <div class="scan-container"></div>
-      <div class="orb-core">
-        <div class="sig-val" id="sigVal">?</div>
-        <div class="sig-sublbl" id="sigLbl">SIGNAL</div>
-      </div>
-    </div>
-    <div class="sig-stats">
-      <div class="stat">
-        <div class="stat-num" id="statHits">0</div>
-        <div class="stat-lbl">СИГНАЛОВ</div>
-      </div>
-      <div class="stat-sep"></div>
-      <div class="stat">
-        <div class="stat-num">70%</div>
-        <div class="stat-lbl">ТОЧНОСТЬ</div>
-      </div>
-      <div class="stat-sep"></div>
-      <div class="stat">
-        <div class="stat-num" id="statBest">—</div>
-        <div class="stat-lbl">ЛУЧШИЙ</div>
-      </div>
-    </div>
-    <button class="sig-btn" id="sigBtn" onclick="getSignal()">🎯 СИГНАЛ</button>
-    <div class="cd-wrap">
-      <div class="cd-track" id="cdTrack"><div class="cd-prog" id="cdProg"></div></div>
-      <div class="cd-txt" id="cdTxt"></div>
+  <div class="topbar" style="padding-bottom:8px;">
+    <div class="brand">KING SIGNAL</div>
+    <div class="online-pill">
+      <div class="online-dot"></div>
+      <span id="oc4">—</span> онлайн
     </div>
   </div>
-  <div class="tagline">KING SIGNAL v6.0</div>
+  <div class="sig-screen">
+    <div class="sig-topnav">
+      <button class="btn-back" onclick="show('s-games')">← НАЗАД</button>
+      <div class="sig-game-tag" id="sigGameLbl"></div>
+    </div>
+    <div class="sig-body">
+      <div class="sig-orb">
+        <div class="orb-bg"></div>
+        <div class="orb-ring orb-r1"></div>
+        <div class="orb-ring orb-r2"></div>
+        <div class="orb-ring orb-r3"></div>
+        <div class="orb-ring orb-r4"></div>
+        <div class="orb-scan"></div>
+        <div class="orb-core">
+          <div class="sig-val" id="sigVal">?</div>
+          <div class="sig-sublbl" id="sigLbl">SIGNAL</div>
+        </div>
+      </div>
+      <div class="sig-stats">
+        <div class="stat">
+          <div class="stat-num" id="statHits">0</div>
+          <div class="stat-lbl">СИГНАЛОВ</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">70%</div>
+          <div class="stat-lbl">ТОЧНОСТЬ</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="statBest">—</div>
+          <div class="stat-lbl">ЛУЧШИЙ</div>
+        </div>
+      </div>
+      <button class="sig-btn" id="sigBtn" onclick="getSignal()">🎯 СИГНАЛ</button>
+      <div class="cd-wrap">
+        <div class="cd-track" id="cdTrack"><div class="cd-fill" id="cdFill"></div></div>
+        <div class="cd-txt" id="cdTxt"></div>
+      </div>
+    </div>
+  </div>
+  <div class="tagline">KING SIGNAL v8.0</div>
 </div>
 
 <!-- ── BANNED ── -->
@@ -668,7 +851,7 @@ body::after{
   <div class="status-screen">
     <span class="status-ico">🚫</span>
     <div class="status-title status-title-red">ЗАБЛОКИРОВАН</div>
-    <div class="status-msg" id="bannedMsg">Ваш ключ заблокирован.</div>
+    <div class="status-msg" id="bannedMsg">Ваш ключ заблокирован. Обратитесь в поддержку.</div>
     <button class="btn-main" style="max-width:280px" onclick="goToKeyScreen()">НАЗАД К ВХОДУ</button>
   </div>
 </div>
@@ -677,8 +860,8 @@ body::after{
 <div class="screen" id="s-expired">
   <div class="status-screen">
     <span class="status-ico">⏳</span>
-    <div class="status-title status-title-gold">ИСТЁК</div>
-    <div class="status-msg">Срок действия вашего ключа истёк. Обратитесь в поддержку.</div>
+    <div class="status-title status-title-gold">ИСТЁК СРОК</div>
+    <div class="status-msg">Срок действия вашего ключа истёк. Обратитесь для продления.</div>
     <button class="btn-main" style="max-width:280px" onclick="goToKeyScreen()">НАЗАД К ВХОДУ</button>
   </div>
 </div>
@@ -693,331 +876,340 @@ body::after{
   </div>
 </div>
 
-<!-- ── MAINTENANCE ── -->
-<div class="screen" id="s-maintenance">
-  <div class="status-screen">
-    <span class="status-ico">🔧</span>
-    <div class="status-title status-title-gold">ТЕХРАБОТЫ</div>
-    <div class="status-msg" id="maintenanceMsg">Сервис временно недоступен.</div>
+<!-- ── DIFFICULTY OVERLAY ── -->
+<div class="overlay" id="diffOverlay">
+  <div class="modal modal-purple">
+    <span class="m-ico">🐔</span>
+    <div class="m-title">CHICKEN ROAD</div>
+    <div class="m-body">Выберите <strong>сложность</strong> — от неё зависит количество шагов в сигнале</div>
+    <button class="diff-btn diff-easy" onclick="selectDiff('easy')">
+      <span class="diff-ico">🟢</span>
+      <div class="diff-info">
+        <div class="diff-name">ЛЁГКИЙ</div>
+        <div class="diff-steps">3 – 12 ШАГОВ · БОЛЬШЕ ШАНСОВ</div>
+      </div>
+    </button>
+    <button class="diff-btn diff-medium" onclick="selectDiff('medium')">
+      <span class="diff-ico">🟡</span>
+      <div class="diff-info">
+        <div class="diff-name">СРЕДНИЙ</div>
+        <div class="diff-steps">3 – 6 ШАГОВ · БАЛАНС</div>
+      </div>
+    </button>
+    <button class="diff-btn diff-hard" onclick="selectDiff('hard')">
+      <span class="diff-ico">🔴</span>
+      <div class="diff-info">
+        <div class="diff-name">СЛОЖНЫЙ</div>
+        <div class="diff-steps">1 – 5 ШАГОВ · ВЫСОКИЙ РИСК</div>
+      </div>
+    </button>
+    <button class="m-btn m-btn-outline" onclick="document.getElementById('diffOverlay').classList.remove('open')">ОТМЕНА</button>
+  </div>
+</div>
+
+<!-- ── WARNING OVERLAY ── -->
+<div class="overlay" id="warnOverlay">
+  <div class="modal modal-warn">
+    <span class="m-ico">⚠️</span>
+    <div class="m-title">ВНИМАНИЕ</div>
+    <div class="m-body">
+      Точность сигнала — <strong>70%</strong><br>
+      Возможны неточные прогнозы.<br><br>
+      Используйте на свой страх и риск.
+    </div>
+    <button class="m-btn m-btn-red" onclick="confirmWarning()">ПОНЯЛ — ВОЙТИ</button>
   </div>
 </div>
 
 <script>
-const API_URL = 'https://king-signal-server.onrender.com';
+const API = 'https://king-signal-server.onrender.com';
+const FIXED_KEY = 'KJOPIOPOI';
+const FIXED_SIGNALS = ['1.24x','1.00x'];
+let fixedIdx = 0;
 let cooling = false;
 let sessionHits = 0;
 let sessionBest = 0;
+let currentGame = null;
 
-// ── UTILS ──────────────────────────────────────────────────────────────────────
+// ── UTILS ─────────────────────────────────────────────────────────────────────
 function show(id){
-  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');});
-  const el = document.getElementById(id);
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
   if(el) el.classList.add('active');
 }
+function getCached(){ try{const d=localStorage.getItem('ks8');return d?JSON.parse(d):null;}catch{return null;} }
+function setCached(o){ try{localStorage.setItem('ks8',JSON.stringify(o));}catch{} }
+function clearCached(){ try{localStorage.removeItem('ks8');}catch{} }
+function goToKeyScreen(){ clearCached(); show('s-key'); }
 
-function getCachedKey(){
-  try{ const d=localStorage.getItem('king_key'); return d?JSON.parse(d):null; }catch(e){return null;}
-}
-function setCachedKey(obj){
-  try{ localStorage.setItem('king_key',JSON.stringify(obj)); }catch(e){}
-}
-function clearCachedKey(){
-  try{ localStorage.removeItem('king_key'); }catch(e){}
-}
-
-function formatExpiryMs(ms){
+function fmtExp(ms){
   if(!ms||ms<=0) return 'EXPIRED';
-  const d=Math.floor(ms/86400000);
-  const h=Math.floor((ms%86400000)/3600000);
-  const m=Math.floor((ms%3600000)/60000);
+  const d=Math.floor(ms/86400000), h=Math.floor((ms%86400000)/3600000), m=Math.floor((ms%3600000)/60000);
   if(d>0) return d+'д '+h+'ч';
   if(h>0) return h+'ч '+m+'м';
   return m+'м';
 }
 
+// ── ONLINE COUNTER ────────────────────────────────────────────────────────────
+let onlineBase = Math.floor(Math.random()*(1892-200+1))+200;
+function updateOnline(){
+  const delta = Math.floor(Math.random()*16)-7;
+  onlineBase = Math.max(200, Math.min(1892, onlineBase+delta));
+  const txt = onlineBase.toLocaleString('ru');
+  ['oc1','oc2','oc3','oc4'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent=txt;
+  });
+}
+updateOnline();
+setInterval(updateOnline, 60000);
+
+// ── PARTICLES ─────────────────────────────────────────────────────────────────
+(function spawnParticles(){
+  const colors=['rgba(124,58,237,','rgba(196,181,253,','rgba(232,121,249,','rgba(56,189,248,'];
+  for(let i=0;i<12;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');
+      p.className='particle';
+      const size=Math.random()*3+1;
+      const color=colors[Math.floor(Math.random()*colors.length)];
+      const opacity=(Math.random()*0.4+0.1).toFixed(2);
+      p.style.cssText=`
+        width:${size}px;height:${size}px;
+        left:${Math.random()*100}vw;
+        background:${color}${opacity});
+        --drift:${(Math.random()-0.5)*100}px;
+        animation-duration:${Math.random()*15+10}s;
+        animation-delay:${Math.random()*10}s;
+        box-shadow:0 0 ${size*3}px ${color}0.5);
+      `;
+      document.body.appendChild(p);
+    }, i*300);
+  }
+})();
+
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 async function doLogin(){
-  const pid = document.getElementById('loginIdInp').value.trim().toUpperCase();
-  const key = document.getElementById('loginKeyInp').value.trim().toUpperCase();
-  if(!pid||!key){ showLoginError('✕ ВВЕДИ АЙДИ И КЛЮЧ'); return; }
-  await verifyKey(key, pid, false);
-}
+  const pid=document.getElementById('loginId').value.trim().toUpperCase();
+  const key=document.getElementById('loginKey').value.trim().toUpperCase();
+  if(!pid||!key){ showErr('✕ ВВЕДИ АЙДИ И КЛЮЧ'); return; }
 
-function showLoginError(msg){
-  const e=document.getElementById('loginErr');
-  e.textContent=msg;
-  shakeInp('loginKeyInp');
-  setTimeout(()=>{ e.textContent=''; },2000);
-}
-function shakeInp(id){
-  const el=document.getElementById(id);
-  if(!el) return;
-  el.classList.add('err-shake');
-  setTimeout(()=>el.classList.remove('err-shake'),400);
-}
-
-function goToKeyScreen(){ clearCachedKey(); show('s-key'); }
-
-async function verifyKey(key, playerId, silent=false){
-  // Спец-ключ — вход без сервера
-  if(key === FIXED_KEY){
-    setCachedKey({key: FIXED_KEY, playerId: playerId || 'DEMO'});
-    fixedSignalIndex = 0;
-    document.getElementById('kiKeyDisp').textContent = FIXED_KEY;
-    document.getElementById('kiExpDisp').textContent = 'DEMO MODE';
+  // Спец-ключ
+  if(key===FIXED_KEY){
+    setCached({key:FIXED_KEY,playerId:pid});
+    fixedIdx=0;
+    document.getElementById('kiKey').textContent=FIXED_KEY;
+    document.getElementById('kiExp').textContent='DEMO MODE';
     show('s-platform');
     return;
   }
-  if(!silent){
-    const btn=document.querySelector('#s-key .btn-main');
-    if(btn){ btn.textContent='ПРОВЕРКА...'; btn.disabled=true; }
-  }
+
+  const btn=document.querySelector('#s-key .btn-main');
+  btn.textContent='ПРОВЕРКА...'; btn.disabled=true;
+
   try{
-    const res=await fetch(`${API_URL}/check?key=${encodeURIComponent(key)}&player_id=${encodeURIComponent(playerId||'')}`);
-    const data=await res.json();
-    if(!silent){
-      const btn=document.querySelector('#s-key .btn-main');
-      if(btn){ btn.textContent='ВОЙТИ'; btn.disabled=false; }
-    }
-    if(data.status==='ok'){
-      setCachedKey({key:data.key, playerId:data.playerId||playerId});
-      document.getElementById('kiKeyDisp').textContent=data.key;
-      document.getElementById('kiExpDisp').textContent='ДО: '+formatExpiryMs(data.expiresIn);
+    const res=await fetch(`${API}/check?key=${encodeURIComponent(key)}&player_id=${encodeURIComponent(pid)}`);
+    const d=await res.json();
+    btn.textContent='ВОЙТИ'; btn.disabled=false;
+
+    if(d.status==='ok'){
+      setCached({key:d.key,playerId:d.playerId||pid});
+      document.getElementById('kiKey').textContent=d.key;
+      document.getElementById('kiExp').textContent=d.expiresIn?'ДО: '+fmtExp(d.expiresIn):'БЕССРОЧНЫЙ';
       show('s-platform');
-    }
-    else if(data.status==='maintenance'){ document.getElementById('maintenanceMsg').textContent=data.message; setCachedKey({key,playerId}); show('s-maintenance'); }
-    else if(data.status==='banned'){ clearCachedKey(); document.getElementById('bannedMsg').textContent=data.message||'Ваш ключ заблокирован.'; show('s-banned'); }
-    else if(data.status==='frozen'){ document.getElementById('frozenMsg').textContent=data.message||'Ваш ключ заморожен.'; show('s-frozen'); }
-    else if(data.status==='expired'){ clearCachedKey(); show('s-expired'); }
-    else{
-      if(!silent) showLoginError(data.message||'✕ НЕВЕРНЫЙ КЛЮЧ ИЛИ АЙДИ');
-      else show('s-key');
-    }
+    } else if(d.status==='banned'){ document.getElementById('bannedMsg').textContent=d.message||'Аккаунт заблокирован.'; show('s-banned'); }
+    else if(d.status==='frozen'){ document.getElementById('frozenMsg').textContent=d.message||'Аккаунт заморожен.'; show('s-frozen'); }
+    else if(d.status==='expired'){ clearCached(); show('s-expired'); }
+    else showErr(d.message||'✕ НЕВЕРНЫЕ ДАННЫЕ');
   } catch(e){
-    if(!silent){
-      const btn=document.querySelector('#s-key .btn-main');
-      if(btn){ btn.textContent='ВОЙТИ'; btn.disabled=false; }
-      showLoginError('✕ НЕТ СОЕДИНЕНИЯ');
-    } else {
-      const c=getCachedKey();
-      if(c){ document.getElementById('kiKeyDisp').textContent=c.key; document.getElementById('kiExpDisp').textContent='ОФЛАЙН'; show('s-platform'); }
-      else show('s-key');
-    }
+    btn.textContent='ВОЙТИ'; btn.disabled=false;
+    showErr('✕ НЕТ СОЕДИНЕНИЯ');
   }
 }
 
+function showErr(msg){
+  const e=document.getElementById('loginErr'); e.textContent=msg;
+  document.getElementById('loginKey').classList.add('err-shake');
+  setTimeout(()=>{ e.textContent=''; document.getElementById('loginKey').classList.remove('err-shake'); },2000);
+}
+
+document.getElementById('loginKey').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('loginId').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
 // ── PLATFORM / GAMES ─────────────────────────────────────────────────────────
 function selectPlatform(p){
-  const badge=document.getElementById('platformBadge');
+  const badge=document.getElementById('platBadge');
   const grid=document.getElementById('gamesGrid');
 
   if(p==='1xbet'){
-    badge.textContent='1XBET'; badge.style.color='#38bdf8';
+    badge.className='plat-badge plat-badge-xbet';
+    badge.textContent='1XBET';
     grid.innerHTML=`
-      <div class="game-tile" onclick="pickGame('aviator')">
-        <span class="gt-badge">HOT</span>
-        <span class="gt-ico">✈️</span>
-        <div class="gt-name">AVIATOR</div>
-        <div class="gt-desc">x1.0 — x150</div>
+      <div class="game-card" onclick="pickGame('aviator')">
+        <span class="gc-badge gcb-hot">HOT</span>
+        <span class="gc-ico">✈️</span>
+        <div class="gc-name">AVIATOR</div>
+        <div class="gc-desc">x1.0 — x150</div>
       </div>
-      <div class="game-tile" onclick="pickGame('crash')">
-        <span class="gt-badge">LIVE</span>
-        <span class="gt-ico">💥</span>
-        <div class="gt-name">CRASH</div>
-        <div class="gt-desc">x1.0 — x100</div>
+      <div class="game-card" onclick="pickGame('crash')">
+        <span class="gc-badge gcb-live">LIVE</span>
+        <span class="gc-ico">💥</span>
+        <div class="gc-name">CRASH</div>
+        <div class="gc-desc">x1.0 — x100</div>
       </div>
-      <div class="game-tile game-tile-full" onclick="pickGame('chicken_road')">
-        <span class="gt-badge">NEW</span>
-        <span class="gt-ico">🐔</span>
-        <div class="gt-name">CHICKEN ROAD</div>
-        <div class="gt-desc">ВЫБЕРИ СЛОЖНОСТЬ</div>
+      <div class="game-card game-card-full" onclick="pickGame('chicken_road')">
+        <span class="gc-badge gcb-new">NEW</span>
+        <span class="gc-ico">🐔</span>
+        <div class="gc-info">
+          <div class="gc-name">CHICKEN ROAD</div>
+          <div class="gc-desc">ВЫБЕРИ СЛОЖНОСТЬ · 1–12 ШАГОВ</div>
+        </div>
       </div>
     `;
   } else {
-    badge.textContent='1WIN'; badge.style.color='#f59e0b';
+    badge.className='plat-badge plat-badge-1win';
+    badge.textContent='1WIN';
     grid.innerHTML=`
-      <div class="game-tile" onclick="pickGame('lucky')">
-        <span class="gt-badge">HOT</span>
-        <span class="gt-ico">🚀</span>
-        <div class="gt-name">LUCKY JET</div>
-        <div class="gt-desc">x1.01 — x200</div>
+      <div class="game-card" onclick="pickGame('lucky')">
+        <span class="gc-badge gcb-hot">HOT</span>
+        <span class="gc-ico">🚀</span>
+        <div class="gc-name">LUCKY JET</div>
+        <div class="gc-desc">x1.01 — x200</div>
       </div>
-      <div class="game-tile" onclick="pickGame('mines')">
-        <span class="gt-badge">LIVE</span>
-        <span class="gt-ico">💣</span>
-        <div class="gt-name">MINES</div>
-        <div class="gt-desc">ДО x1000</div>
+      <div class="game-card" onclick="pickGame('mines')">
+        <span class="gc-badge gcb-live">LIVE</span>
+        <span class="gc-ico">💣</span>
+        <div class="gc-name">MINES</div>
+        <div class="gc-desc">ДО x1000</div>
       </div>
-      <div class="game-tile" onclick="pickGame('rocket')">
-        <span class="gt-badge">LIVE</span>
-        <span class="gt-ico">🛸</span>
-        <div class="gt-name">ROCKET</div>
-        <div class="gt-desc">x1.0 — x50</div>
+      <div class="game-card" onclick="pickGame('rocket')">
+        <span class="gc-badge gcb-live">LIVE</span>
+        <span class="gc-ico">🛸</span>
+        <div class="gc-name">ROCKET</div>
+        <div class="gc-desc">x1.0 — x50</div>
       </div>
-      <div class="game-tile" onclick="pickGame('plinko')">
-        <span class="gt-badge">NEW</span>
-        <span class="gt-ico">🎯</span>
-        <div class="gt-name">PLINKO</div>
-        <div class="gt-desc">x0.5 — x1000</div>
+      <div class="game-card" onclick="pickGame('plinko')">
+        <span class="gc-badge gcb-new">NEW</span>
+        <span class="gc-ico">🎯</span>
+        <div class="gc-name">PLINKO</div>
+        <div class="gc-desc">x0.5 — x1000</div>
       </div>
-      <div class="game-tile" onclick="pickGame('dice')">
-        <span class="gt-badge">LIVE</span>
-        <span class="gt-ico">🎲</span>
-        <div class="gt-name">DICE</div>
-        <div class="gt-desc">x1.0 — x99</div>
+      <div class="game-card" onclick="pickGame('dice')">
+        <span class="gc-badge gcb-live">LIVE</span>
+        <span class="gc-ico">🎲</span>
+        <div class="gc-name">DICE</div>
+        <div class="gc-desc">x1.0 — x99</div>
       </div>
-      <div class="game-tile" onclick="pickGame('wheel')">
-        <span class="gt-badge">LIVE</span>
-        <span class="gt-ico">🎡</span>
-        <div class="gt-name">WHEEL</div>
-        <div class="gt-desc">x1.5 — x50</div>
+      <div class="game-card" onclick="pickGame('wheel')">
+        <span class="gc-badge gcb-live">LIVE</span>
+        <span class="gc-ico">🎡</span>
+        <div class="gc-name">WHEEL</div>
+        <div class="gc-desc">x1.5 — x50</div>
       </div>
     `;
   }
   show('s-games');
 }
 
-let currentGame = null;
-
 function pickGame(game){
-  const c=getCachedKey(); if(!c){ show('s-key'); return; }
+  const c=getCached(); if(!c){ show('s-key'); return; }
   currentGame=game;
-
-  // Chicken Road — показываем выбор сложности
   if(game==='chicken_road'){
     document.getElementById('diffOverlay').classList.add('open');
     return;
   }
-
   const labels={
-    lucky:'LUCKY JET 🚀',
-    lucky_jet_1x:'LUCKY JET 🚀',
-    aviator:'AVIATOR ✈️',
-    crash:'CRASH 💥',
-    rocket:'ROCKET 🛸',
-    mines:'MINES 💣',
-    plinko:'PLINKO 🎯',
-    dice:'DICE 🎲',
-    wheel:'WHEEL 🎡'
+    lucky:'LUCKY JET 🚀', aviator:'AVIATOR ✈️', crash:'CRASH 💥',
+    rocket:'ROCKET 🛸', mines:'MINES 💣', plinko:'PLINKO 🎯',
+    dice:'DICE 🎲', wheel:'WHEEL 🎡'
   };
-  document.getElementById('signalGameLbl').textContent=labels[game]||game.toUpperCase();
+  document.getElementById('sigGameLbl').textContent=labels[game]||game.toUpperCase();
   document.getElementById('warnOverlay').classList.add('open');
 }
 
-function selectDifficulty(diff){
+function selectDiff(diff){
   document.getElementById('diffOverlay').classList.remove('open');
-  currentGame = 'chicken_road_' + diff;
-  const labels = { easy:'CHICKEN ROAD 🐔 · ЛЁГКИЙ', medium:'CHICKEN ROAD 🐔 · СРЕДНИЙ', hard:'CHICKEN ROAD 🐔 · СЛОЖНЫЙ' };
-  document.getElementById('signalGameLbl').textContent = labels[diff];
+  currentGame='chicken_road_'+diff;
+  const labels={easy:'CHICKEN ROAD 🐔 · ЛЁГКИЙ',medium:'CHICKEN ROAD 🐔 · СРЕДНИЙ',hard:'CHICKEN ROAD 🐔 · СЛОЖНЫЙ'};
+  document.getElementById('sigGameLbl').textContent=labels[diff];
   document.getElementById('warnOverlay').classList.add('open');
 }
 
 function confirmWarning(){
   document.getElementById('warnOverlay').classList.remove('open');
-  // Сброс индекса фиксированных сигналов
-  if(isFixedMode()) fixedSignalIndex = 0;
-  // Reset signal display
-  const sv=document.getElementById('sigVal'), sl=document.getElementById('sigLbl');
-  sv.classList.remove('show','big','mega'); sv.textContent='?'; sl.classList.remove('show');
+  if(currentGame&&currentGame.startsWith('chicken_road')) fixedIdx=0;
+  const sv=document.getElementById('sigVal'),sl=document.getElementById('sigLbl');
+  sv.className='sig-val'; sv.textContent='?'; sl.className='sig-sublbl';
   document.getElementById('sigBtn').disabled=false;
   document.getElementById('cdTrack').classList.remove('on');
-  document.getElementById('cdProg').style.width='0%';
+  document.getElementById('cdFill').style.width='0%';
   document.getElementById('cdTxt').textContent='';
   cooling=false;
+  sessionHits=0; sessionBest=0;
+  document.getElementById('statHits').textContent='0';
+  document.getElementById('statBest').textContent='—';
   show('s-signal');
 }
 
 // ── SIGNAL LOGIC ─────────────────────────────────────────────────────────────
-
-// Фиксированные сигналы для спец-ключа
-const FIXED_KEY = 'KJOPIOPOI';
-const FIXED_SIGNALS = ['1.24x', '1.00x'];
-let fixedSignalIndex = 0;
-
-function isFixedMode(){
-  const c = getCachedKey();
-  return c && c.key === FIXED_KEY;
-}
-
-function randomMult(){
-  // Если спец-ключ — чередуем 1.24x / 1.00x
-  if(isFixedMode()){
-    const val = FIXED_SIGNALS[fixedSignalIndex % FIXED_SIGNALS.length];
-    fixedSignalIndex++;
-    return val;
+function genSignal(){
+  const c=getCached();
+  if(c&&c.key===FIXED_KEY){
+    const val=FIXED_SIGNALS[fixedIdx%FIXED_SIGNALS.length]; fixedIdx++; return val;
   }
-
-  // Chicken Road — шаги по сложности
-  if(currentGame === 'chicken_road_easy'){
-    const steps = Math.floor(Math.random() * 10) + 3; // 3-12
-    return steps + ' ШАГОВ 🐔';
+  if(currentGame==='chicken_road_easy') return (Math.floor(Math.random()*10)+3)+' ШАГОВ 🐔';
+  if(currentGame==='chicken_road_medium') return (Math.floor(Math.random()*4)+3)+' ШАГОВ 🐔';
+  if(currentGame==='chicken_road_hard') return (Math.floor(Math.random()*5)+1)+' ШАГОВ 🐔';
+  if(currentGame==='mines'){
+    const safe=Math.floor(Math.random()*8)+1;
+    return safe+' КЛЕТОК 💣';
   }
-  if(currentGame === 'chicken_road_medium'){
-    const steps = Math.floor(Math.random() * 4) + 3; // 3-6
-    return steps + ' ШАГОВ 🐔';
+  if(currentGame==='dice'){
+    const n=Math.floor(Math.random()*99)+1;
+    return n+(n>50?' ВЫШЕ':' НИЖЕ');
   }
-  if(currentGame === 'chicken_road_hard'){
-    const steps = Math.floor(Math.random() * 5) + 1; // 1-5
-    return steps + ' ШАГОВ 🐔';
+  if(currentGame==='wheel'){
+    return ['x1.5','x2','x3','x5','x10','x20','x50'][Math.floor(Math.random()*7)];
   }
-
-  // Mines — сколько клеток безопасно открыть
-  if(currentGame === 'mines'){
-    const safe = Math.floor(Math.random() * 8) + 1; // 1-8
-    return safe + ' КЛЕТОК 💣';
+  if(currentGame==='plinko'){
+    const r=Math.random();
+    if(r<0.4) return (0.5+Math.random()*1.5).toFixed(1)+'x';
+    if(r<0.72) return (2+Math.random()*4).toFixed(1)+'x';
+    if(r<0.92) return (6+Math.random()*20).toFixed(0)+'x';
+    return (50+Math.random()*950).toFixed(0)+'x';
   }
-
-  // Dice
-  if(currentGame === 'dice'){
-    const num = Math.floor(Math.random() * 99) + 1;
-    return num + (num > 50 ? ' ВЫШЕ' : ' НИЖЕ');
-  }
-
-  // Wheel
-  if(currentGame === 'wheel'){
-    const opts = ['x1.5','x2','x3','x5','x10','x20','x50'];
-    return opts[Math.floor(Math.random() * opts.length)];
-  }
-
-  // Plinko
-  if(currentGame === 'plinko'){
-    const r = Math.random();
-    if(r < 0.4) return (0.5 + Math.random()*1).toFixed(1)+'x';
-    if(r < 0.7) return (2 + Math.random()*3).toFixed(1)+'x';
-    if(r < 0.9) return (5 + Math.random()*15).toFixed(0)+'x';
-    return (50 + Math.random()*950).toFixed(0)+'x';
-  }
-
-  // Обычные игры (aviator, crash, lucky jet, rocket)
   const r=Math.random();
-  if(r<0.55) return (1.2+Math.random()*0.4).toFixed(2)+'x';
-  if(r<0.78) return (1.6+Math.random()*1.6).toFixed(2)+'x';
-  if(r<0.92) return (3.2+Math.random()*7.0).toFixed(2)+'x';
-  if(r<0.98) return (10+Math.random()*12).toFixed(2)+'x';
-  return (22+Math.random()*78).toFixed(2)+'x';
+  if(r<0.52) return (1.2+Math.random()*0.5).toFixed(2)+'x';
+  if(r<0.76) return (1.7+Math.random()*1.8).toFixed(2)+'x';
+  if(r<0.91) return (3.5+Math.random()*7).toFixed(2)+'x';
+  if(r<0.97) return (10+Math.random()*14).toFixed(2)+'x';
+  return (24+Math.random()*76).toFixed(2)+'x';
 }
 
 function getSignal(){
   if(cooling) return;
-  const c=getCachedKey(); if(!c){ show('s-key'); return; }
-  const value=randomMult();
+  const c=getCached(); if(!c){ show('s-key'); return; }
+  const value=genSignal();
   sessionHits++;
+  document.getElementById('statHits').textContent=sessionHits;
+
   const numVal=parseFloat(value);
-  if(numVal>sessionBest){
+  if(!isNaN(numVal)&&numVal>sessionBest){
     sessionBest=numVal;
     document.getElementById('statBest').textContent=value;
   }
-  document.getElementById('statHits').textContent=sessionHits;
 
   const sv=document.getElementById('sigVal'), sl=document.getElementById('sigLbl');
-  sv.classList.remove('show','big','mega'); sl.classList.remove('show');
+  sv.className='sig-val'; sl.className='sig-sublbl';
+
   setTimeout(()=>{
     sv.textContent=value;
-    if(numVal>=20) sv.classList.add('show','mega');
+    const isChicken=value.includes('ШАГОВ')||value.includes('КЛЕТОК')||value.includes('ВЫШЕ')||value.includes('НИЖЕ');
+    if(isChicken) sv.classList.add('show','chicken');
+    else if(numVal>=20) sv.classList.add('show','mega');
     else if(numVal>=5) sv.classList.add('show','big');
     else sv.classList.add('show');
     sl.classList.add('show');
-  },90);
+  },100);
 
   startCooldown();
 }
@@ -1027,13 +1219,13 @@ function startCooldown(){
   cooling=true;
   document.getElementById('sigBtn').disabled=true;
   const track=document.getElementById('cdTrack');
-  const prog=document.getElementById('cdProg');
+  const fill=document.getElementById('cdFill');
   const txt=document.getElementById('cdTxt');
   track.classList.add('on');
-  prog.style.transition='none'; prog.style.width='0%';
+  fill.style.transition='none'; fill.style.width='0%';
   requestAnimationFrame(()=>{
-    prog.style.transition=`width ${COOLDOWN}ms linear`;
-    prog.style.width='100%';
+    fill.style.transition=`width ${COOLDOWN}ms linear`;
+    fill.style.width='100%';
   });
   let rem=Math.ceil(COOLDOWN/1000);
   txt.textContent='⏳ '+rem+'с';
@@ -1041,57 +1233,52 @@ function startCooldown(){
     rem--;
     if(rem>0){ txt.textContent='⏳ '+rem+'с'; }
     else{
-      clearInterval(iv);
-      cooling=false;
+      clearInterval(iv); cooling=false;
       document.getElementById('sigBtn').disabled=false;
       track.classList.remove('on');
-      prog.style.transition='none'; prog.style.width='0%';
-      txt.textContent='✓ ГОТОВ';
-      setTimeout(()=>{ txt.textContent=''; },1500);
+      fill.style.transition='none'; fill.style.width='0%';
+      txt.textContent='✓ ГОТОВО';
+      setTimeout(()=>{ txt.textContent=''; },1200);
     }
   },1000);
 }
 
-// ── ONLINE COUNTER ────────────────────────────────────────────────────────────
-let onlineBase = Math.floor(Math.random() * (1892 - 200 + 1)) + 200;
-
-function updateOnline(){
-  const delta = Math.floor(Math.random() * 16) - 7; // -7 до +8
-  onlineBase = Math.max(200, Math.min(1892, onlineBase + delta));
-  const txt = onlineBase.toLocaleString('ru');
-  ['onlineCount1','onlineCount2','onlineCount3','onlineCount4'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.textContent = txt;
-  });
-}
-updateOnline();
-setInterval(updateOnline, 60000); // каждую минуту
-
 // ── INIT ─────────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async function(){
-  const c=getCachedKey();
+window.addEventListener('DOMContentLoaded', async ()=>{
+  const c=getCached();
   if(c&&c.key&&c.playerId){
-    document.getElementById('loginIdInp').value=c.playerId;
-    document.getElementById('loginKeyInp').value=c.key;
-    await verifyKey(c.key, c.playerId, true);
-  } else {
-    show('s-key');
-  }
+    if(c.key===FIXED_KEY){
+      document.getElementById('kiKey').textContent=FIXED_KEY;
+      document.getElementById('kiExp').textContent='DEMO MODE';
+      show('s-platform'); return;
+    }
+    document.getElementById('loginId').value=c.playerId;
+    document.getElementById('loginKey').value=c.key;
+    try{
+      const res=await fetch(`${API}/check?key=${encodeURIComponent(c.key)}&player_id=${encodeURIComponent(c.playerId)}`);
+      const d=await res.json();
+      if(d.status==='ok'){
+        document.getElementById('kiKey').textContent=d.key;
+        document.getElementById('kiExp').textContent=d.expiresIn?'ДО: '+fmtExp(d.expiresIn):'БЕССРОЧНЫЙ';
+        show('s-platform');
+      } else { clearCached(); show('s-key'); }
+    } catch{ show('s-platform'); }
+  } else { show('s-key'); }
 
-  // Periodic key validity check
+  // Periodic check
   setInterval(async()=>{
-    const c=getCachedKey(); if(!c) return;
+    const c=getCached(); if(!c||c.key===FIXED_KEY) return;
     const active=document.querySelector('.screen.active'); if(!active) return;
     if(['s-platform','s-games','s-signal'].includes(active.id)){
       try{
-        const res=await fetch(`${API_URL}/check?key=${encodeURIComponent(c.key)}&player_id=${encodeURIComponent(c.playerId||'')}`);
-        const data=await res.json();
-        if(data.status==='banned'){ clearCachedKey(); document.getElementById('bannedMsg').textContent=data.message||'Ваш ключ заблокирован.'; show('s-banned'); }
-        else if(data.status==='frozen'){ document.getElementById('frozenMsg').textContent=data.message||'Ваш ключ заморожен.'; show('s-frozen'); }
-        else if(data.status==='expired'){ clearCachedKey(); show('s-expired'); }
-      }catch(e){}
+        const res=await fetch(`${API}/check?key=${encodeURIComponent(c.key)}&player_id=${encodeURIComponent(c.playerId||'')}`);
+        const d=await res.json();
+        if(d.status==='banned'){ clearCached(); document.getElementById('bannedMsg').textContent=d.message||'Заблокирован.'; show('s-banned'); }
+        else if(d.status==='frozen'){ document.getElementById('frozenMsg').textContent=d.message||'Заморожен.'; show('s-frozen'); }
+        else if(d.status==='expired'){ clearCached(); show('s-expired'); }
+      } catch{}
     }
-  }, 25000);
+  }, 30000);
 });
 </script>
 </body>
