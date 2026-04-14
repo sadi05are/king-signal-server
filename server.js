@@ -8,8 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const BOT_TOKEN    = process.env.BOT_TOKEN || '8639490181:AAHlTgtVDsRuohlt0ZgcGV2h0J4vz7o5pLQ';
-const ADMIN_ID     = process.env.ADMIN_ID  || '6697505756';
+const BOT_TOKEN    = process.env.BOT_TOKEN || '8778762497:AAEpXb9BCdyztC1YQRJaGTSL4IIGrZC8dJ0';
+const ADMIN_ID     = process.env.ADMIN_ID  || '8572856251';
 const PLAYERS_FILE = './players.json';
 const STATE_FILE   = './state.json';
 
