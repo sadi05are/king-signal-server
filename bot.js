@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 
-const BOT_TOKEN = process.env.BOT_TOKEN || '8778762497:AAEpXb9BCdyztC1YQRJaGTSL4IIGrZC8dJ0';
-const ADMIN_IDS = (process.env.ADMIN_IDS || '8572856251').split(',').map(s => s.trim());
+const BOT_TOKEN = process.env.BOT_TOKEN || '8783703077:AAG3y2MpQVf9Oft4WldADuebD0TVX5SCLqQ';
+const ADMIN_IDS = (process.env.ADMIN_IDS || '8373868627').split(',').map(s => s.trim());
 const API_URL   = process.env.API_URL || 'https://king-signal-server.onrender.com';
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: false });
